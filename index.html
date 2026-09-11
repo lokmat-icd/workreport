@@ -1047,13 +1047,13 @@ const JOB_SCHEMAS = {
     ],
     compute: (p) => { p.areaCm2 = (p.widthCm || 0) * (p.heightCm || 0); return p; }
   },
-  paginationAlter: {
+    paginationAlter: {
     label: "Pagination · Alter",
     icon: "fa-pen-to-square",
     subtitle: "Alteration of existing pages",
     fields: [
-      { key: "newsChange", label: "News Change", type: "number", min: 0, required: true },
-      { key: "qty",        label: "Qty",         type: "number", min: 0, required: true }
+      { key: "pageName",   label: "Page Name",   type: "text",   required: true, placeholder: "e.g., 19Satara Class" },
+	  { key: "newsChange", label: "News Change", type: "number", min: 0, required: true }
     ]
   },
   paginationFresh: {
@@ -1823,7 +1823,7 @@ function summarizePayload(type, p) {
   if (!p) return '-';
   switch (type) {
     case 'advt':            return `${p.advtType || ''} • ${p.advtName || ''} • ${p.widthCm || 0}×${p.heightCm || 0} cm`;
-    case 'paginationAlter': return `News Change: ${p.newsChange || 0} • Qty: ${p.qty || 0}`;
+    case 'paginationAlter': return `${p.pageName || ''} • News Change: ${p.newsChange || 0}`;
     case 'paginationFresh': return `${p.pageName || ''} • Advt: ${p.advtPct || 0}%`;
     case 'typing':          return `${p.articleName || ''} • ${p.words || 0} words`;
     case 'photo':           return `${p.count || 0} photos`;
