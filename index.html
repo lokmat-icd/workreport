@@ -2245,8 +2245,15 @@ function renderDashboard() {
       fromStr, toStr
     );
 
+     const teamDocIds = new Set(
+      allUsersCache
+        .filter(u => u.role !== 'admin'
+                  && u.unit === user.unit
+                  && u.workplace === user.workplace)
+        .map(u => u.emailDocId || u.docId)
+    );
     const teamEntries = filterEntriesByDate(
-      adminEntriesCache.filter(e => e.unit === user.unit && e.workplace === user.workplace),
+      adminEntriesCache.filter(e => teamDocIds.has(e.emailDocId)),
       fromStr, toStr
     );
 
@@ -2423,9 +2430,17 @@ function renderTeamLog() {
 
   let rows = adminEntriesCache.slice();
 
-  if (unit) rows = rows.filter(e => e.unit === unit);
-  if (wp)   rows = rows.filter(e => e.workplace === wp);
-  if (emp)  rows = rows.filter(e => e.emailDocId === emp);
+  const unitMatch = (u) => !unit || u.unit === unit;
+  const wpMatch   = (u) => !wp   || u.workplace === wp;
+  const empMatch  = (u) => !emp  || (u.emailDocId || u.docId) === emp;
+
+  const allowedDocIds = new Set(
+    allUsersCache
+      .filter(u => u.role !== 'admin' && unitMatch(u) && wpMatch(u) && empMatch(u))
+      .map(u => u.emailDocId || u.docId)
+  );
+
+  let rows = adminEntriesCache.filter(e => allowedDocIds.has(e.emailDocId));
 
   if (fromStr || toStr) {
     const { start, end } = dateRangeFromInputs(fromStr, toStr);
