@@ -254,7 +254,7 @@ body {
 .emp-info .meta i { color: #4fc3f7; font-size: 10px; }
 
 .chart-wrap {
-  position: relative; height: 220px; margin-bottom: 14px;
+  position: relative; height: 240px; margin-bottom: 14px;
 }
 .emp-card-actions {
   display: flex; gap: 8px; justify-content: flex-end;
@@ -289,6 +289,14 @@ table th {
 }
 table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; color: #333; }
 table tr:hover td { background: #f8f9fc; }
+
+/* Widen the Date/Time column of the Team Log table */
+#teamLogBody table th:first-child,
+#teamLogBody table td:first-child {
+  min-width: 150px;
+  white-space: nowrap;
+}
+
 .type-badge {
   padding: 3px 10px; border-radius: 10px;
   font-size: 11px; font-weight: 600;
@@ -361,6 +369,77 @@ table tr:hover td { background: #f8f9fc; }
 .job-form .form-actions {
   margin-top: 18px;
   display: flex; gap: 10px; align-items: center;
+}
+
+/* ============ PDF EDITION GRID ============ */
+.edition-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.edition-panel {
+  background: #fff;
+  border: 2px solid #e8ecf1;
+  border-radius: 10px;
+  padding: 14px;
+}
+.edition-panel.hello { border-color: #ffe0b2; }
+.edition-panel.main  { border-color: #bbdefb; }
+.edition-panel h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f2f5;
+  display: flex; align-items: center; gap: 6px;
+}
+.edition-panel.hello h4 i { color: #f57c00; }
+.edition-panel.main  h4 i { color: #1976d2; }
+.edition-row {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.edition-row:last-child { margin-bottom: 0; }
+.edition-row label {
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edition-row input {
+  width: 100%;
+  padding: 7px 8px;
+  border: 2px solid #e8ecf1;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fafbfc;
+  text-align: right;
+}
+.edition-row input:focus {
+  outline: none;
+  border-color: #4fc3f7;
+  background: #fff;
+}
+.edition-total {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f2f5;
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+}
+.edition-total strong { color: #1a1a2e; font-size: 14px; }
+
+@media (max-width: 640px) {
+  .edition-grid { grid-template-columns: 1fr; }
 }
 
 /* ============ MODAL ============ */
@@ -675,8 +754,8 @@ table tr:hover td { background: #f8f9fc; }
     </div>
     <div class="modal-body" id="settingsBody"></div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="resetSettingsDefaults()">
-        <i class="fas fa-undo"></i> Reset Defaults
+      <button class="btn btn-outline" onclick="reloadSettingsFromFirestore()">
+        <i class="fas fa-sync"></i> Reload from Firestore
       </button>
       <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">
         <i class="fas fa-save"></i> Save Settings
@@ -784,7 +863,69 @@ const db = firebase.firestore();
    CONSTANTS
    ============================================================ */
 const EDIT_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 hours
+const SETTINGS_DOC_PATH = { collection: 'settings', doc: 'scoreRules' };
 
+/* PDF edition lists (hard-coded) */
+const PDF_HELLO_EDITIONS = [
+  "Hello Sindhudurg",
+  "Hello Ratnagiri",
+  "Hello Satara",
+  "Hello Sangli",
+  "Hello Kolhapur"
+];
+const PDF_MAIN_EDITIONS = [
+  "Main Kokan",
+  "Main Satara",
+  "Main Sangli",
+  "Main Kolhapur"
+];
+
+/* ============================================================
+   SETTINGS FIELD DEFINITIONS
+   ============================================================ */
+const SETTINGS_GROUPS = [
+  {
+    key: 'advt', label: 'Advt Design', icon: 'fa-rectangle-ad',
+    fields: [
+      { key: 'fullPage',          label: 'Full Page (>1500 cm²)' },
+      { key: 'aboveHalf',         label: 'Above Half (750–1500)' },
+      { key: 'aboveQuarter',      label: 'Above Quarter (400–750)' },
+      { key: 'belowQuarter',      label: 'Below Quarter (300–400)' },
+      { key: 'sizeA',             label: 'Size A (200–300)' },
+      { key: 'sizeB',             label: 'Size B (100–200)' },
+      { key: 'sizeC',             label: 'Size C (0–100)' },
+      { key: 'brandingMultiplier',label: 'Branding (per cm²)' }
+    ]
+  },
+  {
+    key: 'paginationAlter', label: 'Pagination · Alter', icon: 'fa-pen-to-square',
+    fields: [
+      { key: 'perNews',      label: 'Per News Change' },
+      { key: 'capThreshold', label: 'Cap Threshold (News > this)' },
+      { key: 'capScore',     label: 'Cap Score (flat)' }
+    ]
+  },
+  {
+    key: 'paginationFresh', label: 'Pagination · Fresh', icon: 'fa-file-circle-plus',
+    fields: [
+      { key: 'freshMultiplier', label: 'Fresh Multiplier' }
+    ]
+  },
+  { key: 'typing',  label: 'Typing',                icon: 'fa-keyboard',  fields: [{ key: 'perWord',         label: 'Per Word' }] },
+  { key: 'photo',   label: 'Photo Editing',         icon: 'fa-image',     fields: [{ key: 'perPhoto',        label: 'Per Photo' }] },
+  { key: 'epaper',  label: 'Epaper',                icon: 'fa-newspaper', fields: [{ key: 'perPage',         label: 'Per Page' }] },
+  { key: 'pdf',     label: 'PDF Making',            icon: 'fa-file-pdf',  fields: [
+      { key: 'mainPerPage',  label: 'Main (per page)'  },
+      { key: 'helloPerPage', label: 'Hello (per page)' }
+    ]
+  },
+  { key: 'graphic', label: 'AI Image/Graphic/Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
+  { key: 'other',   label: 'Other Work',             icon: 'fa-tasks',    fields: [{ key: 'perEntry',        label: 'Per Entry' }] }
+];
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
 function emailDocId(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/@/g, '_').replace(/\./g, '_');
@@ -795,6 +936,17 @@ function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* Escape then convert newlines to <br>. Safe against HTML injection,
+   because escaping runs first. */
+function formatDetailHtml(detail) {
+  return escapeHtml(detail).replace(/\n/g, '<br>');
+}
+
+/* Field-id-safe version of an edition name */
+function safeId(s) {
+  return String(s).replace(/[^a-zA-Z0-9]/g, '_');
 }
 
 function showToast(message, type = 'info') {
@@ -824,11 +976,9 @@ function showMessage(id, msg, type = 'error') {
   el.textContent = msg;
   el.className = 'message ' + type;
 }
-function hideMessage(id) {
-  document.getElementById(id).style.display = 'none';
-}
+function hideMessage(id) { document.getElementById(id).style.display = 'none'; }
 
-function openModal(id) { document.getElementById(id).classList.add('active'); }
+function openModal(id)  { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
 function fmtTime(ts) {
@@ -837,13 +987,6 @@ function fmtTime(ts) {
   return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function fmtDate(ts) {
-  if (!ts) return '-';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('en-IN', { dateStyle: 'medium' });
-}
-
-/* Build a Timestamp range from YYYY-MM-DD strings (inclusive). */
 function dateRangeFromInputs(fromStr, toStr) {
   const range = { start: null, end: null };
   if (fromStr) {
@@ -899,24 +1042,34 @@ const JOB_SCHEMAS = {
     fields: [
       { key: "advtType", label: "Advt Type", type: "select", options: ["General", "Branding"], required: true },
       { key: "advtName", label: "Advt Name", type: "text", required: true, placeholder: "e.g., Diwali Ad_D-62" },
-      { key: "widthCm", label: "Width (cm)", type: "number", step: 0.5, min: 3, max: 33, required: true },
+      { key: "widthCm",  label: "Width (cm)",  type: "number", step: 0.5, min: 3, max: 33, required: true },
       { key: "heightCm", label: "Height (cm)", type: "number", step: 0.5, min: 3, max: 50, required: true }
     ],
     compute: (p) => { p.areaCm2 = (p.widthCm || 0) * (p.heightCm || 0); return p; }
   },
-  pagination: {
-    label: "Pagination", icon: "fa-layer-group", subtitle: "Page layout and classifieds",
+  paginationAlter: {
+    label: "Pagination · Alter",
+    icon: "fa-pen-to-square",
+    subtitle: "Alteration of existing pages",
     fields: [
-      { key: "pgnType", label: "Nature", type: "select", options: ["Classified", "Alter", "Fresh"], required: true },
-      { key: "ratio", label: "Class/Advt Ratio (0–1)", type: "number", step: 0.05, min: 0, max: 1, required: true },
-      { key: "pageName", label: "Page Name", type: "text", required: true, placeholder: "e.g., 19Satara Class" }
+      { key: "newsChange", label: "News Change", type: "number", min: 0, required: true },
+      { key: "qty",        label: "Qty",         type: "number", min: 0, required: true }
+    ]
+  },
+  paginationFresh: {
+    label: "Pagination · Fresh",
+    icon: "fa-file-circle-plus",
+    subtitle: "Fresh page layout",
+    fields: [
+      { key: "pageName", label: "Page Name",      type: "text",   required: true, placeholder: "e.g., 19Satara Fresh" },
+      { key: "advtPct",  label: "Advt % (0–100)", type: "number", min: 0, max: 100, step: 0.1, required: true }
     ]
   },
   typing: {
     label: "Typing", icon: "fa-keyboard", subtitle: "Articles and news typing",
     fields: [
       { key: "articleName", label: "Article / News Name", type: "text", required: true },
-      { key: "words", label: "Words", type: "number", min: 1, required: true }
+      { key: "words",       label: "Words",                type: "number", min: 1, required: true }
     ]
   },
   photo: {
@@ -926,10 +1079,7 @@ const JOB_SCHEMAS = {
   pdf: {
     label: "PDF Making", icon: "fa-file-pdf", subtitle: "Hello and Main PDF generation",
     fields: [
-      { key: "helloEdition", label: "Hello Edition", type: "select", options: ["", "Hello Sindhudurg", "Hello Ratnagiri", "Hello Satara", "Hello Sangli", "Hello Kolhapur"] },
-      { key: "helloPages", label: "Hello Pages", type: "number", min: 0, max: 8 },
-      { key: "mainEdition", label: "Main Edition", type: "select", options: ["", "Main Kokan", "Main Satara", "Main Sangli", "Main Kolhapur"] },
-      { key: "mainPages", label: "Main Pages", type: "number", min: 0, max: 80 }
+      { key: "editions", type: "editionGrid", required: true }
     ]
   },
   epaper: {
@@ -937,10 +1087,10 @@ const JOB_SCHEMAS = {
     fields: [{ key: "pages", label: "Pages Uploaded", type: "number", min: 1, max: 100, required: true }]
   },
   graphic: {
-    label: "Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
+    label: "AI Image/Graphic/Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
     fields: [
-      { key: "name", label: "Graphic Name", type: "text", required: true },
-      { key: "number", label: "Number", type: "number", min: 0, required: true }
+      { key: "name",   label: "Graphic Name", type: "text",   required: true },
+      { key: "number", label: "Number",       type: "number", min: 0, required: true }
     ]
   },
   other: {
@@ -949,46 +1099,29 @@ const JOB_SCHEMAS = {
   }
 };
 
-const DEFAULT_SCORE_RULES = {
-  advt: { fullPage: 12, aboveHalf: 6, aboveQuarter: 3, belowQuarter: 2, sizeA: 1.5, sizeB: 1, sizeC: 0.5, brandingMultiplier: 0.008 },
-  pagination: { alterCity: 3, alterDist: 0.1, classifiedMultiplier: 0.75 },
-  typing:     { perWord: 0.002 },
-  photo:      { perPhoto: 0.02 },
-  epaper:     { perPage: 0.075 },
-  pdf:        { mainPerPage: 0.2, helloPerPage: 0.05 },
-  graphic:    { perIllustration: 12 },
-  other:      { perEntry: 0 }
-};
-
 /* ============================================================
    STATE
    ============================================================ */
 let currentDocId = null;
-let currentUser = null;
-let scoreRules = null;
-let todayEntries = [];
+let currentUser  = null;
+let scoreRules   = null;
+let todayEntries  = [];
 let recentEntries = [];
-let unsubToday = null;
+let unsubToday  = null;
 let unsubRecent = null;
-let editingEntry = null;
+let unsubSettings = null;
+let editingEntry  = null;
 let deletingEntry = null;
 
-/* Admin state */
-let allUsersCache = [];      // [{docId, ...userData}]
-let adminEntriesCache = [];  // all entries across users (used for dashboard + team log)
+let allUsersCache = [];
+let adminEntriesCache = [];
 let adminListenersAttached = false;
-let currentAdminTab = 'dashboard';
 
-/* Team Log pagination */
 let teamLogAllRows = [];
 let teamLogShown = 0;
 const TEAM_LOG_PAGE = 100;
 
-/* Detail Log state */
 let detailLogUser = null;
-let detailLogEntries = [];
-
-/* Chart instances */
 const chartInstances = {};
 
 /* ============================================================
@@ -1011,9 +1144,9 @@ function showForgot() {
 }
 
 async function handleLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-  const keep = document.getElementById('keepLoggedIn').checked;
+  const keep     = document.getElementById('keepLoggedIn').checked;
   hideMessage('loginMessage');
   if (!email || !password) { showMessage('loginMessage', 'Please enter email and password', 'error'); return; }
 
@@ -1087,7 +1220,7 @@ async function handleRegister() {
     console.error('Register:', err);
     let msg = err.message;
     if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in.';
-    else if (err.code === 'auth/weak-password') msg = 'Password too weak. Use at least 6 characters.';
+    else if (err.code === 'auth/weak-password')   msg = 'Password too weak. Use at least 6 characters.';
     showMessage('registerMessage', msg, 'error');
   } finally {
     btn.innerHTML = orig;
@@ -1117,6 +1250,7 @@ async function handleForgot() {
 async function handleLogout() {
   detachListeners();
   detachAdminListeners();
+  detachSettingsListener();
   await auth.signOut();
 }
 
@@ -1127,7 +1261,8 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentDocId = emailDocId(user.email);
     await loadUserDoc();
-    await loadScoreRules();
+
+    attachSettingsListener();
 
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
@@ -1152,13 +1287,14 @@ auth.onAuthStateChanged(async (user) => {
     }
   } else {
     currentDocId = null;
-    currentUser = null;
-    scoreRules = null;
+    currentUser  = null;
+    scoreRules   = null;
     document.getElementById('loginContainer').style.display = 'flex';
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('settingsBtn').style.display = 'none';
     detachListeners();
     detachAdminListeners();
+    detachSettingsListener();
   }
 });
 
@@ -1186,14 +1322,54 @@ async function loadUserDoc() {
   }
 }
 
+/* ============================================================
+   SETTINGS LISTENER — LIVE FROM FIRESTORE
+   ============================================================ */
+function attachSettingsListener() {
+  detachSettingsListener();
+  const ref = db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc);
+
+  unsubSettings = ref.onSnapshot(
+    (doc) => {
+      if (doc.exists) {
+        scoreRules = doc.data() || {};
+        console.info('✅ Score rules synced from Firestore (live).', scoreRules);
+      } else {
+        scoreRules = null;
+        console.warn('⚠️ settings/scoreRules does not exist in Firestore.');
+      }
+      const settingsModal = document.getElementById('settingsModal');
+      if (settingsModal && settingsModal.classList.contains('active')) {
+        renderSettingsForm();
+      }
+    },
+    (err) => {
+      console.error('settings listener error:', err);
+      ref.get().then(d => {
+        scoreRules = d.exists ? (d.data() || {}) : null;
+      }).catch(e => { console.error('fallback get failed:', e); scoreRules = null; });
+    }
+  );
+}
+
+function detachSettingsListener() {
+  if (unsubSettings) { unsubSettings(); unsubSettings = null; }
+}
+
 async function loadScoreRules() {
   try {
-    const doc = await db.collection('settings').doc('scoreRules').get();
-    if (doc.exists) scoreRules = doc.data();
-    else scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+    const ref = db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc);
+    const doc = await ref.get();
+    if (doc.exists) {
+      scoreRules = doc.data() || {};
+      console.info('✅ Score rules fetched from Firestore.', scoreRules);
+    } else {
+      scoreRules = null;
+      console.warn('⚠️ settings/scoreRules document does not exist in Firestore.');
+    }
   } catch (e) {
     console.error('loadScoreRules:', e);
-    scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+    scoreRules = null;
   }
 }
 
@@ -1201,32 +1377,46 @@ async function loadScoreRules() {
    SCORING
    ============================================================ */
 function computeScore(type, payload) {
-  const r = scoreRules || DEFAULT_SCORE_RULES;
+  if (!scoreRules) return null;
+  const r = scoreRules;
+
   switch (type) {
     case 'advt': {
       const area = payload.areaCm2 || 0;
-      if (payload.advtType === 'Branding') return area * r.advt.brandingMultiplier;
-      if (area > 1500) return r.advt.fullPage;
-      if (area > 750)  return r.advt.aboveHalf;
-      if (area > 400)  return r.advt.aboveQuarter;
-      if (area > 300)  return r.advt.belowQuarter;
-      if (area > 200)  return r.advt.sizeA;
-      if (area > 100)  return r.advt.sizeB;
-      if (area > 0)    return r.advt.sizeC;
+      const advt = r.advt || {};
+      if (payload.advtType === 'Branding') return area * (advt.brandingMultiplier || 0);
+      if (area > 1500) return advt.fullPage     || 0;
+      if (area > 750)  return advt.aboveHalf    || 0;
+      if (area > 400)  return advt.aboveQuarter || 0;
+      if (area > 300)  return advt.belowQuarter || 0;
+      if (area > 200)  return advt.sizeA        || 0;
+      if (area > 100)  return advt.sizeB        || 0;
+      if (area > 0)    return advt.sizeC        || 0;
       return 0;
     }
-    case 'typing':  return (payload.words || 0) * r.typing.perWord;
-    case 'photo':   return (payload.count || 0) * r.photo.perPhoto;
-    case 'epaper':  return (payload.pages || 0) * r.epaper.perPage;
-    case 'graphic': return (payload.number || 0) * r.graphic.perIllustration;
-    case 'pdf': return (payload.mainPages || 0) * r.pdf.mainPerPage + (payload.helloPages || 0) * r.pdf.helloPerPage;
-    case 'pagination': {
-      const ratio = payload.ratio || 0;
-      if (payload.pgnType === 'Classified') return ratio * r.pagination.classifiedMultiplier;
-      if (payload.pgnType === 'Alter') return r.pagination.altered;
-      return 0;
+    case 'paginationAlter': {
+      const pa = r.paginationAlter || {};
+      const nc = payload.newsChange || 0;
+      if (nc > (pa.capThreshold || 0)) return pa.capScore || 0;
+      return nc * (pa.perNews || 0);
     }
-    case 'other': return r.other.perEntry || 0;
+    case 'paginationFresh': {
+      const pf = r.paginationFresh || {};
+      const frac = (payload.advtPct || 0) / 100;
+      return (1 - frac) * (pf.freshMultiplier || 0);
+    }
+    case 'typing':  return (payload.words || 0) * ((r.typing  && r.typing.perWord)  || 0);
+    case 'photo':   return (payload.count || 0) * ((r.photo   && r.photo.perPhoto)  || 0);
+    case 'epaper':  return (payload.pages || 0) * ((r.epaper  && r.epaper.perPage)  || 0);
+    case 'graphic': return (payload.number || 0) * ((r.graphic && r.graphic.perIllustration) || 0);
+    case 'pdf': {
+      const ed = payload.editions || {};
+      const helloTotal = ed.helloTotal || 0;
+      const mainTotal  = ed.mainTotal  || 0;
+      return helloTotal * ((r.pdf && r.pdf.helloPerPage) || 0)
+           + mainTotal  * ((r.pdf && r.pdf.mainPerPage)  || 0);
+    }
+    case 'other':   return (r.other && r.other.perEntry) || 0;
     default: return 0;
   }
 }
@@ -1251,13 +1441,17 @@ function renderAccordion() {
         </summary>
         <div class="job-body">
           <form class="job-form" onsubmit="event.preventDefault(); submitEntry('${type}');">
-            <div class="form-row">
-              ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
-              <div class="form-group">
-                <label>Date &amp; Time <span class="required">*</span></label>
-                <input type="datetime-local" id="field-${type}-occurredAt" required>
-              </div>
-            </div>
+            ${
+              schema.fields.some(f => f.type === 'editionGrid')
+                ? schema.fields.map(f => renderEditionGrid(f, type, 'new', null)).join('')
+                : `<div class="form-row">
+                     ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
+                     <div class="form-group">
+                       <label>Date &amp; Time <span class="required">*</span></label>
+                       <input type="datetime-local" id="field-${type}-occurredAt" required>
+                     </div>
+                   </div>`
+            }
             <div class="form-actions">
               <button type="submit" class="btn btn-success">
                 <i class="fas fa-save"></i> Save Entry
@@ -1272,17 +1466,23 @@ function renderAccordion() {
     `;
   }
   container.innerHTML = html;
+
   for (const type of Object.keys(JOB_SCHEMAS)) {
     const el = document.getElementById(`field-${type}-occurredAt`);
     if (el) el.value = localNow();
   }
+  const pdfOcc = document.getElementById('field-pdf-occurredAt');
+  if (pdfOcc) pdfOcc.value = localNow();
+
+  attachPdfGridListeners('pdf', 'new');
 }
 
+/* ---------- Normal field renderer ---------- */
 function renderField(f, type, mode, value) {
-  const id = `${mode}-${type}-${f.key}`;
-  const req = f.required ? '<span class="required">*</span>' : '';
+  const id   = `${mode}-${type}-${f.key}`;
+  const req  = f.required ? '<span class="required">*</span>' : '';
   const help = f.help ? `<span class="help-text">${escapeHtml(f.help)}</span>` : '';
-  const v = (value !== undefined && value !== null) ? value : '';
+  const v    = (value !== undefined && value !== null) ? value : '';
 
   if (f.type === 'select') {
     return `
@@ -1302,7 +1502,7 @@ function renderField(f, type, mode, value) {
       <textarea id="${id}" ${f.required ? 'required' : ''}>${escapeHtml(v)}</textarea>${help}</div>`;
   }
   const attrs = [
-    f.step ? `step="${f.step}"` : '',
+    f.step        ? `step="${f.step}"` : '',
     f.min !== undefined ? `min="${f.min}"` : '',
     f.max !== undefined ? `max="${f.max}"` : '',
     f.placeholder ? `placeholder="${escapeHtml(f.placeholder)}"` : '',
@@ -1312,37 +1512,163 @@ function renderField(f, type, mode, value) {
     <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
 }
 
+/* ---------- PDF edition grid renderer ---------- */
+function renderEditionGrid(f, type, mode, savedEditions) {
+  const prefix = `${mode}-${type}-${f.key}`;
+  const savedHello = (savedEditions && savedEditions.hello) || {};
+  const savedMain  = (savedEditions && savedEditions.main)  || {};
+
+  const helloRows = PDF_HELLO_EDITIONS.map(name => {
+    const id = `${prefix}-hello-${safeId(name)}`;
+    const v  = savedHello[name] || '';
+    return `
+      <div class="edition-row">
+        <label for="${id}">${escapeHtml(name)}</label>
+        <input type="number" min="0" step="1" id="${id}"
+               value="${v === '' ? '' : escapeHtml(String(v))}"
+               data-pdf-edition="hello" data-edition-name="${escapeHtml(name)}">
+      </div>`;
+  }).join('');
+
+  const mainRows = PDF_MAIN_EDITIONS.map(name => {
+    const id = `${prefix}-main-${safeId(name)}`;
+    const v  = savedMain[name] || '';
+    return `
+      <div class="edition-row">
+        <label for="${id}">${escapeHtml(name)}</label>
+        <input type="number" min="0" step="1" id="${id}"
+               value="${v === '' ? '' : escapeHtml(String(v))}"
+               data-pdf-edition="main" data-edition-name="${escapeHtml(name)}">
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="edition-grid">
+      <div class="edition-panel hello">
+        <h4><i class="fas fa-newspaper"></i> Hello Edition</h4>
+        ${helloRows}
+        <div class="edition-total">Hello Total: <strong id="${prefix}-hello-total">0</strong> pages</div>
+      </div>
+      <div class="edition-panel main">
+        <h4><i class="fas fa-book-open"></i> Main Edition</h4>
+        ${mainRows}
+        <div class="edition-total">Main Total: <strong id="${prefix}-main-total">0</strong> pages</div>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:16px;">
+      <div class="form-group">
+        <label>Date &amp; Time <span class="required">*</span></label>
+        <input type="datetime-local" id="field-${type}-occurredAt" required>
+      </div>
+    </div>
+  `;
+}
+
+function attachPdfGridListeners(type, mode) {
+  const prefix = `${mode}-${type}-editions`;
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    if (el.tagName !== 'INPUT') return;
+    el.addEventListener('input', () => { updatePdfTotals(prefix); });
+  });
+  updatePdfTotals(prefix);
+}
+
+function updatePdfTotals(prefix) {
+  const helloTotalEl = document.getElementById(`${prefix}-hello-total`);
+  const mainTotalEl  = document.getElementById(`${prefix}-main-total`);
+  if (!helloTotalEl && !mainTotalEl) return;
+
+  let hello = 0, main = 0;
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    if (el.tagName !== 'INPUT') return;
+    const n = parseFloat(el.value);
+    if (isNaN(n)) return;
+    if (el.dataset.pdfEdition === 'hello') hello += n;
+    else if (el.dataset.pdfEdition === 'main') main += n;
+  });
+  if (helloTotalEl) helloTotalEl.textContent = hello;
+  if (mainTotalEl)  mainTotalEl.textContent  = main;
+}
+
+function readPdfGridPayload(prefix) {
+  const hello = {};
+  const main  = {};
+  let helloTotal = 0, mainTotal = 0;
+
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    if (el.tagName !== 'INPUT') return;
+    const name = el.dataset.editionName;
+    const kind = el.dataset.pdfEdition;
+    if (!name || !kind) return;
+    const n = parseFloat(el.value);
+    const v = isNaN(n) ? 0 : n;
+
+    if (kind === 'hello') {
+      hello[name] = v;
+      helloTotal += v;
+    } else if (kind === 'main') {
+      main[name] = v;
+      mainTotal += v;
+    }
+  });
+
+  return { hello, main, helloTotal, mainTotal };
+}
+
 /* ============================================================
-   EMPLOYEE: SUBMIT ENTRY (writes BOTH subcollection + top-level)
+   EMPLOYEE: SUBMIT ENTRY
    ============================================================ */
 async function submitEntry(type) {
   if (!currentDocId || !currentUser) return;
+  if (!scoreRules) {
+    showToast('Score settings not loaded from Firestore. Cannot save.', 'error');
+    return;
+  }
+
   const schema = JOB_SCHEMAS[type];
   const payload = {};
 
-  for (const f of schema.fields) {
-    const el = document.getElementById(`new-${type}-${f.key}`);
-    if (!el) continue;
-    let v = el.value;
-    if (f.type === 'number') v = v === '' ? null : parseFloat(v);
-    if (f.required && (v === '' || v === null || v === undefined)) {
-      showToast(`Please fill "${f.label}"`, 'warning');
-      el.focus();
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+  if (hasEditionGrid) {
+    const gridField = schema.fields.find(f => f.type === 'editionGrid');
+    const prefix = `new-${type}-${gridField.key}`;
+    const editions = readPdfGridPayload(prefix);
+
+    if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
+      showToast('Please enter pages for at least one edition', 'warning');
       return;
     }
-    payload[f.key] = v;
+    payload[gridField.key] = editions;
+  } else {
+    for (const f of schema.fields) {
+      const el = document.getElementById(`new-${type}-${f.key}`);
+      if (!el) continue;
+      let v = el.value;
+      if (f.type === 'number') v = v === '' ? null : parseFloat(v);
+      if (f.required && (v === '' || v === null || v === undefined)) {
+        showToast(`Please fill "${f.label}"`, 'warning');
+        el.focus();
+        return;
+      }
+      payload[f.key] = v;
+    }
   }
 
-  const occurredEl = document.getElementById(`field-${type}-occurredAt`);
+  const occurredEl  = document.getElementById(`field-${type}-occurredAt`);
   const occurredStr = occurredEl.value;
   if (!occurredStr) { showToast('Please pick a date and time', 'warning'); return; }
 
   if (schema.compute) schema.compute(payload);
+
   const score = computeScore(type, payload);
+  if (score === null) {
+    showToast('Score settings unavailable. Cannot compute score.', 'error');
+    return;
+  }
 
   const occurredDate = new Date(occurredStr);
 
-  // Shared data — one doc for the user subcollection, one for the top-level entries
   const sharedBase = {
     uid: auth.currentUser.email,
     emailDocId: currentDocId,
@@ -1376,11 +1702,20 @@ async function submitEntry(type) {
 
     await batch.commit();
 
-    for (const f of schema.fields) {
-      const el = document.getElementById(`new-${type}-${f.key}`);
-      if (!el) continue;
-      if (f.type === 'select') el.selectedIndex = 0;
-      else el.value = '';
+    if (hasEditionGrid) {
+      const gridField = schema.fields.find(f => f.type === 'editionGrid');
+      const prefix = `new-${type}-${gridField.key}`;
+      document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+        if (el.tagName === 'INPUT') el.value = '';
+      });
+      updatePdfTotals(prefix);
+    } else {
+      for (const f of schema.fields) {
+        const el = document.getElementById(`new-${type}-${f.key}`);
+        if (!el) continue;
+        if (f.type === 'select') el.selectedIndex = 0;
+        else el.value = '';
+      }
     }
     occurredEl.value = localNow();
     showToast('Entry saved!', 'success');
@@ -1419,9 +1754,9 @@ function attachListeners() {
 }
 
 function detachListeners() {
-  if (unsubToday) { unsubToday(); unsubToday = null; }
+  if (unsubToday)  { unsubToday();  unsubToday  = null; }
   if (unsubRecent) { unsubRecent(); unsubRecent = null; }
-  todayEntries = [];
+  todayEntries  = [];
   recentEntries = [];
 }
 
@@ -1471,7 +1806,7 @@ function renderRecent() {
     html += `<tr>
       <td>${fmtTime(e.occurredAt)}</td>
       <td><span class="type-badge"><i class="fas ${schema.icon}"></i> ${escapeHtml(schema.label)}</span></td>
-      <td>${escapeHtml(detail)}</td>
+      <td>${formatDetailHtml(detail)}</td>
       <td>${actionsHtml}</td>
     </tr>`;
   });
@@ -1480,19 +1815,50 @@ function renderRecent() {
   body.innerHTML = html;
 }
 
+/* ---------- Summary text ---------- */
 function summarizePayload(type, p) {
   if (!p) return '-';
   switch (type) {
-    case 'advt': return `${p.advtType || ''} • ${p.advtName || ''} • ${p.widthCm || 0}×${p.heightCm || 0} cm`;
-    case 'pagination': return `${p.pgnType || ''} • ratio ${p.ratio || 0} • ${p.pageName || ''}`;
-    case 'typing': return `${p.articleName || ''} • ${p.words || 0} words`;
-    case 'photo': return `${p.count || 0} photos`;
-    case 'pdf': return `Hello: ${p.helloEdition || '-'} (${p.helloPages || 0}p) • Main: ${p.mainEdition || '-'} (${p.mainPages || 0}p)`;
-    case 'epaper': return `${p.pages || 0} pages`;
-    case 'graphic': return `${p.name || ''} • ×${p.number || 0}`;
-    case 'other': return p.description || '-';
-    default: return JSON.stringify(p);
+    case 'advt':            return `${p.advtType || ''} • ${p.advtName || ''} • ${p.widthCm || 0}×${p.heightCm || 0} cm`;
+    case 'paginationAlter': return `News Change: ${p.newsChange || 0} • Qty: ${p.qty || 0}`;
+    case 'paginationFresh': return `${p.pageName || ''} • Advt: ${p.advtPct || 0}%`;
+    case 'typing':          return `${p.articleName || ''} • ${p.words || 0} words`;
+    case 'photo':           return `${p.count || 0} photos`;
+    case 'pdf':             return summarizePdf(p);
+    case 'epaper':          return `${p.pages || 0} pages`;
+    case 'graphic':         return `${p.name || ''} • ×${p.number || 0}`;
+    case 'other':           return p.description || '-';
+    default:                return JSON.stringify(p);
   }
+}
+
+/* PDF summary across two lines (Hello line, Main line) */
+function summarizePdf(p) {
+  const ed = p.editions || {};
+  const hello = ed.hello || {};
+  const main  = ed.main  || {};
+
+  const helloItems = Object.keys(hello)
+    .filter(n => (hello[n] || 0) > 0)
+    .map(n => `${stripPrefix(n, 'Hello')} ${hello[n]}`);
+
+  const mainItems = Object.keys(main)
+    .filter(n => (main[n] || 0) > 0)
+    .map(n => `${stripPrefix(n, 'Main')} ${main[n]}`);
+
+  const parts = [];
+  if (helloItems.length > 0) {
+    parts.push(`Hello: ${helloItems.join(', ')} (${ed.helloTotal || 0}p)`);
+  }
+  if (mainItems.length > 0) {
+    parts.push(`Main: ${mainItems.join(', ')} (${ed.mainTotal || 0}p)`);
+  }
+  return parts.length ? parts.join('\n') : '-';
+}
+
+function stripPrefix(name, prefix) {
+  const re = new RegExp('^' + prefix + '\\s+', 'i');
+  return String(name).replace(re, '');
 }
 
 /* ============================================================
@@ -1507,34 +1873,70 @@ function openEditEntry(entryId) {
   const schema = JOB_SCHEMAS[entry.type];
   if (!schema) { showToast('Unknown entry type', 'error'); return; }
 
-  let html = `<div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">`;
-  schema.fields.forEach(f => { html += renderField(f, entry.type, 'edit', entry.payload[f.key]); });
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+  let html = '';
+  if (hasEditionGrid) {
+    const gridField = schema.fields.find(f => f.type === 'editionGrid');
+    html += renderEditionGrid(gridField, entry.type, 'edit', entry.payload[gridField.key]);
+  } else {
+    html += `<div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">`;
+    schema.fields.forEach(f => { html += renderField(f, entry.type, 'edit', entry.payload[f.key]); });
+    html += `</div>`;
+  }
+
   const occStr = toLocalInputValue(entry.occurredAt);
-  html += `<div class="form-group">
+  html += `<div class="form-group" style="margin-top:14px;">
              <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
              <input type="datetime-local" value="${occStr}" disabled>
-           </div></div>`;
+           </div>`;
+
   document.getElementById('editModalBody').innerHTML = html;
   openModal('editModal');
+
+  if (hasEditionGrid) {
+    /* The renderEditionGrid inserts a datetime input in edit mode with the
+       id "field-pdf-occurredAt" — rename it to avoid collision. */
+    const el = document.getElementById('field-' + entry.type + '-occurredAt');
+    if (el) el.id = 'edit-' + entry.type + '-occurredAt-readonly';
+    attachPdfGridListeners(entry.type, 'edit');
+  }
 }
 
 async function saveEditedEntry() {
   if (!editingEntry || !currentDocId) return;
+  if (!scoreRules) { showToast('Score settings not loaded from Firestore.', 'error'); return; }
+
   const schema = JOB_SCHEMAS[editingEntry.type];
   const payload = {};
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
 
-  for (const f of schema.fields) {
-    const el = document.getElementById(`edit-${editingEntry.type}-${f.key}`);
-    if (!el) continue;
-    let v = el.value;
-    if (f.type === 'number') v = v === '' ? null : parseFloat(v);
-    if (f.required && (v === '' || v === null || v === undefined)) {
-      showToast(`Please fill "${f.label}"`, 'warning'); el.focus(); return;
+  if (hasEditionGrid) {
+    const gridField = schema.fields.find(f => f.type === 'editionGrid');
+    const prefix = `edit-${editingEntry.type}-${gridField.key}`;
+    const editions = readPdfGridPayload(prefix);
+
+    if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
+      showToast('Please enter pages for at least one edition', 'warning');
+      return;
     }
-    payload[f.key] = v;
+    payload[gridField.key] = editions;
+  } else {
+    for (const f of schema.fields) {
+      const el = document.getElementById(`edit-${editingEntry.type}-${f.key}`);
+      if (!el) continue;
+      let v = el.value;
+      if (f.type === 'number') v = v === '' ? null : parseFloat(v);
+      if (f.required && (v === '' || v === null || v === undefined)) {
+        showToast(`Please fill "${f.label}"`, 'warning'); el.focus(); return;
+      }
+      payload[f.key] = v;
+    }
   }
+
   if (schema.compute) schema.compute(payload);
   const score = computeScore(editingEntry.type, payload);
+  if (score === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
 
   const btn = document.getElementById('editSaveBtn');
   const orig = btn.innerHTML;
@@ -1601,12 +2003,11 @@ async function confirmDeleteEntry() {
    ADMIN: INITIALIZATION
    ============================================================ */
 async function initAdminDashboard() {
-  // Default dates = today
   const t = todayStr();
   document.getElementById('dashFilterFrom').value = t;
-  document.getElementById('dashFilterTo').value = t;
-  document.getElementById('logFilterFrom').value = t;
-  document.getElementById('logFilterTo').value = t;
+  document.getElementById('dashFilterTo').value   = t;
+  document.getElementById('logFilterFrom').value  = t;
+  document.getElementById('logFilterTo').value    = t;
 
   await loadAllUsersAndEntries();
 
@@ -1653,7 +2054,6 @@ function detachAdminListeners() {
   adminEntriesCache = [];
 }
 
-/* -------- Filter option population -------- */
 function uniqueSorted(arr) {
   return Array.from(new Set(arr.filter(Boolean))).sort();
 }
@@ -1668,8 +2068,8 @@ function populateDashUnitSelect() {
 function populateDashWorkplaceSelect() {
   const unit = document.getElementById('dashFilterUnit').value;
   const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
-  const wps = uniqueSorted(pool.map(u => u.workplace));
-  const sel = document.getElementById('dashFilterWorkplace');
+  const wps  = uniqueSorted(pool.map(u => u.workplace));
+  const sel  = document.getElementById('dashFilterWorkplace');
   sel.innerHTML = `<option value="">All Workplaces</option>` +
     wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
 }
@@ -1684,15 +2084,15 @@ function populateLogUnitSelect() {
 function populateLogWorkplaceSelect() {
   const unit = document.getElementById('logFilterUnit').value;
   const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
-  const wps = uniqueSorted(pool.map(u => u.workplace));
-  const sel = document.getElementById('logFilterWorkplace');
+  const wps  = uniqueSorted(pool.map(u => u.workplace));
+  const sel  = document.getElementById('logFilterWorkplace');
   sel.innerHTML = `<option value="">All Workplaces</option>` +
     wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
 }
 
 function populateLogEmployeeSelect() {
   const unit = document.getElementById('logFilterUnit').value;
-  const wp = document.getElementById('logFilterWorkplace').value;
+  const wp   = document.getElementById('logFilterWorkplace').value;
   let pool = allUsersCache;
   if (unit) pool = pool.filter(u => u.unit === unit);
   if (wp)   pool = pool.filter(u => u.workplace === wp);
@@ -1703,19 +2103,16 @@ function populateLogEmployeeSelect() {
     pool.map(u => `<option value="${escapeHtml(u.emailDocId || u.docId)}">${escapeHtml(u.fullName || u.email || u.docId)}</option>`).join('');
 }
 
-/* -------- Filter change handlers -------- */
 function onDashUnitChange() {
   document.getElementById('dashFilterWorkplace').value = '';
   populateDashWorkplaceSelect();
   onDashFilterChange();
 }
-function onDashFilterChange() {
-  renderDashboard();
-}
+function onDashFilterChange() { renderDashboard(); }
 
 function onLogUnitChange() {
   document.getElementById('logFilterWorkplace').value = '';
-  document.getElementById('logFilterEmployee').value = '';
+  document.getElementById('logFilterEmployee').value  = '';
   populateLogWorkplaceSelect();
   populateLogEmployeeSelect();
   onLogFilterChange();
@@ -1725,9 +2122,7 @@ function onLogWorkplaceChange() {
   populateLogEmployeeSelect();
   onLogFilterChange();
 }
-function onLogFilterChange() {
-  renderTeamLog();
-}
+function onLogFilterChange() { renderTeamLog(); }
 
 function resetDashFilters() {
   document.getElementById('dashFilterUnit').value = '';
@@ -1735,7 +2130,7 @@ function resetDashFilters() {
   document.getElementById('dashFilterWorkplace').value = '';
   const t = todayStr();
   document.getElementById('dashFilterFrom').value = t;
-  document.getElementById('dashFilterTo').value = t;
+  document.getElementById('dashFilterTo').value   = t;
   renderDashboard();
 }
 
@@ -1747,15 +2142,11 @@ function resetLogFilters() {
   document.getElementById('logFilterEmployee').value = '';
   const t = todayStr();
   document.getElementById('logFilterFrom').value = t;
-  document.getElementById('logFilterTo').value = t;
+  document.getElementById('logFilterTo').value   = t;
   renderTeamLog();
 }
 
-/* ============================================================
-   ADMIN: TAB SWITCHING
-   ============================================================ */
 function switchAdminTab(tab) {
-  currentAdminTab = tab;
   document.getElementById('tabBtnDashboard').classList.toggle('active', tab === 'dashboard');
   document.getElementById('tabBtnTeamLog').classList.toggle('active', tab === 'teamlog');
   document.getElementById('tabDashboard').classList.toggle('active', tab === 'dashboard');
@@ -1783,14 +2174,14 @@ function filterEntriesByDate(entries, fromStr, toStr) {
     const t = toTimestamp(e);
     if (t === null) return false;
     if (start && t < start.toDate().getTime()) return false;
-    if (end && t > end.toDate().getTime()) return false;
+    if (end   && t > end.toDate().getTime())   return false;
     return true;
   });
 }
 
 function renderDashboard() {
-  const cards = document.getElementById('dashCards');
-  const users = filterUsersByDashFilters();
+  const cards   = document.getElementById('dashCards');
+  const users   = filterUsersByDashFilters();
   const fromStr = document.getElementById('dashFilterFrom').value;
   const toStr   = document.getElementById('dashFilterTo').value;
 
@@ -1803,7 +2194,6 @@ function renderDashboard() {
     return;
   }
 
-  // Destroy old charts
   Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch(e) {} });
   Object.keys(chartInstances).forEach(k => delete chartInstances[k]);
 
@@ -1812,21 +2202,16 @@ function renderDashboard() {
   users.forEach(user => {
     const docId = user.emailDocId || user.docId;
 
-    // This user's entries in range
     const userEntries = filterEntriesByDate(
       adminEntriesCache.filter(e => e.emailDocId === docId),
       fromStr, toStr
     );
 
-    // Team entries: same unit + workplace, in range
     const teamEntries = filterEntriesByDate(
-      adminEntriesCache.filter(e =>
-        e.unit === user.unit && e.workplace === user.workplace
-      ),
+      adminEntriesCache.filter(e => e.unit === user.unit && e.workplace === user.workplace),
       fromStr, toStr
     );
 
-    // Score per job type
     const userByType = {};
     const teamByType = {};
     Object.keys(JOB_SCHEMAS).forEach(t => { userByType[t] = 0; teamByType[t] = 0; });
@@ -1860,8 +2245,7 @@ function renderDashboard() {
     `;
     cards.appendChild(card);
 
-    // Build the chart after element is in DOM
-    const labels = Object.keys(JOB_SCHEMAS).map(t => JOB_SCHEMAS[t].label);
+    const labels   = Object.keys(JOB_SCHEMAS).map(t => JOB_SCHEMAS[t].label);
     const userData = Object.keys(JOB_SCHEMAS).map(t => +userByType[t].toFixed(2));
     const teamData = Object.keys(JOB_SCHEMAS).map(t => +teamByType[t].toFixed(2));
 
@@ -1875,17 +2259,15 @@ function renderDashboard() {
             label: 'User Score',
             data: userData,
             backgroundColor: 'rgba(33,150,243,0.85)',
-            borderColor: 'rgba(33,150,243,1)',
-            borderWidth: 1,
-            borderRadius: 4
+            borderColor:     'rgba(33,150,243,1)',
+            borderWidth: 1, borderRadius: 4
           },
           {
             label: 'Team Total (same workplace)',
             data: teamData,
             backgroundColor: 'rgba(200,200,200,0.5)',
-            borderColor: 'rgba(150,150,150,0.9)',
-            borderWidth: 1,
-            borderRadius: 4
+            borderColor:     'rgba(150,150,150,0.9)',
+            borderWidth: 1, borderRadius: 4
           }
         ]
       },
@@ -1894,7 +2276,7 @@ function renderDashboard() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+          legend:  { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.x}` } }
         },
         scales: {
@@ -1916,29 +2298,21 @@ function openDetailLog(docId) {
 
   document.getElementById('detailLogTitle').textContent = `Detail Log — ${user.fullName || user.email}`;
 
-  // Populate Job filter
   const jobSel = document.getElementById('detailFilterJob');
   jobSel.innerHTML = `<option value="">All Jobs</option>` +
     Object.keys(JOB_SCHEMAS).map(t => `<option value="${t}">${escapeHtml(JOB_SCHEMAS[t].label)}</option>`).join('');
 
-  // Default: no date filters, show last 100
   document.getElementById('detailFilterFrom').value = '';
-  document.getElementById('detailFilterTo').value = '';
-
-  // Preload entries
-  detailLogEntries = adminEntriesCache
-    .filter(e => e.emailDocId === docId)
-    .sort((a, b) => toTimestamp(b) - toTimestamp(a))
-    .slice(0, 100);
+  document.getElementById('detailFilterTo').value   = '';
 
   renderDetailLog();
   openModal('detailLogModal');
 }
 
 function resetDetailFilters() {
-  document.getElementById('detailFilterJob').value = '';
+  document.getElementById('detailFilterJob').value  = '';
   document.getElementById('detailFilterFrom').value = '';
-  document.getElementById('detailFilterTo').value = '';
+  document.getElementById('detailFilterTo').value   = '';
   renderDetailLog();
 }
 
@@ -1963,7 +2337,7 @@ function renderDetailLog() {
       const t = toTimestamp(e);
       if (t === null) return false;
       if (start && t < start.toDate().getTime()) return false;
-      if (end && t > end.toDate().getTime()) return false;
+      if (end   && t > end.toDate().getTime())   return false;
       return true;
     });
   } else {
@@ -1991,7 +2365,7 @@ function renderDetailLog() {
     html += `<tr>
       <td>${fmtTime(e.occurredAt)}</td>
       <td><span class="type-badge"><i class="fas ${schema.icon}"></i> ${escapeHtml(schema.label)}</span></td>
-      <td>${escapeHtml(detail)}</td>
+      <td>${formatDetailHtml(detail)}</td>
     </tr>`;
   });
 
@@ -2021,7 +2395,7 @@ function renderTeamLog() {
       const t = toTimestamp(e);
       if (t === null) return false;
       if (start && t < start.toDate().getTime()) return false;
-      if (end && t > end.toDate().getTime()) return false;
+      if (end   && t > end.toDate().getTime())   return false;
       return true;
     });
   }
@@ -2034,8 +2408,8 @@ function renderTeamLog() {
 }
 
 function renderTeamLogRows() {
-  const body = document.getElementById('teamLogBody');
-  const countEl = document.getElementById('teamLogCount');
+  const body     = document.getElementById('teamLogBody');
+  const countEl  = document.getElementById('teamLogCount');
   const moreWrap = document.getElementById('teamLogMoreWrap');
 
   countEl.textContent = teamLogAllRows.length + ' entries';
@@ -2055,18 +2429,21 @@ function renderTeamLogRows() {
   let html = '<table><thead><tr>' +
     '<th>Date / Time</th><th>Employee</th><th>Unit</th><th>Workplace</th>' +
     '<th>Job Type</th><th>Details</th>' +
+    '<th style="text-align:right;width:80px;">Score</th>' +
     '</tr></thead><tbody>';
 
   slice.forEach(e => {
     const schema = JOB_SCHEMAS[e.type] || { label: e.type, icon: 'fa-circle' };
     const detail = summarizePayload(e.type, e.payload);
+    const scoreVal = (e.score === null || e.score === undefined) ? 0 : e.score;
     html += `<tr>
       <td>${fmtTime(e.occurredAt)}</td>
       <td>${escapeHtml(e.fullName || e.uid || '-')}</td>
       <td>${escapeHtml(e.unit || '-')}</td>
       <td>${escapeHtml(e.workplace || '-')}</td>
       <td><span class="type-badge"><i class="fas ${schema.icon}"></i> ${escapeHtml(schema.label)}</span></td>
-      <td>${escapeHtml(detail)}</td>
+      <td>${formatDetailHtml(detail)}</td>
+      <td style="text-align:right;font-weight:600;color:#1976d2;">${scoreVal.toFixed(2)}</td>
     </tr>`;
   });
 
@@ -2088,46 +2465,60 @@ function teamLogLoadMore() {
 }
 
 /* ============================================================
-   SETTINGS (ADMIN ONLY)
+   SETTINGS (ADMIN)
    ============================================================ */
 function openSettings() {
   if (!currentUser || currentUser.role !== 'admin') { showToast('Admin access required', 'warning'); return; }
   renderSettingsForm();
   openModal('settingsModal');
-}
 
-const SETTINGS_GROUPS = [
-  { key: 'advt', label: 'Advt Design', icon: 'fa-rectangle-ad',
-    fields: [
-      { key: 'fullPage', label: 'Full Page (>1500 cm²)' },
-      { key: 'aboveHalf', label: 'Above Half (750–1500)' },
-      { key: 'aboveQuarter', label: 'Above Quarter (400–750)' },
-      { key: 'belowQuarter', label: 'Below Quarter (300–400)' },
-      { key: 'sizeA', label: 'Size A (200–300)' },
-      { key: 'sizeB', label: 'Size B (100–200)' },
-      { key: 'sizeC', label: 'Size C (0–100)' },
-      { key: 'brandingMultiplier', label: 'Branding (per cm²)' }
-    ]},
-  { key: 'pagination', label: 'Pagination', icon: 'fa-layer-group',
-    fields: [
-      { key: 'alterCity', label: 'Alter CITY (per page)' },
-      { key: 'alterDist', label: 'Alter DIST (per page)' },
-      { key: 'classifiedMultiplier', label: 'Classified (× ratio)' }
-    ]},
-  { key: 'typing', label: 'Typing', icon: 'fa-keyboard', fields: [{ key: 'perWord', label: 'Per Word' }] },
-  { key: 'photo', label: 'Photo Editing', icon: 'fa-image', fields: [{ key: 'perPhoto', label: 'Per Photo' }] },
-  { key: 'epaper', label: 'Epaper', icon: 'fa-newspaper', fields: [{ key: 'perPage', label: 'Per Page' }] },
-  { key: 'pdf', label: 'PDF Making', icon: 'fa-file-pdf',
-    fields: [
-      { key: 'mainPerPage', label: 'Main (per page)' },
-      { key: 'helloPerPage', label: 'Hello (per page)' }
-    ]},
-  { key: 'graphic', label: 'Graphic / Illustration', icon: 'fa-palette', fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
-  { key: 'other', label: 'Other Work', icon: 'fa-tasks', fields: [{ key: 'perEntry', label: 'Per Entry' }] }
-];
+  loadScoreRules().then(() => {
+    const modal = document.getElementById('settingsModal');
+    if (modal && modal.classList.contains('active')) renderSettingsForm();
+  });
+}
 
 function renderSettingsForm() {
   const body = document.getElementById('settingsBody');
+  if (!scoreRules) {
+    body.innerHTML = `<div class="empty-state">
+      <i class="fas fa-exclamation-triangle" style="color:#f57c00;"></i>
+      <h3>No settings document found in Firestore</h3>
+      <p>settings/scoreRules does not exist yet.</p>
+      <p style="margin-top:8px;font-size:12px;">
+        Please fill the form below and click Save. This will create the
+        document with the values you enter.
+      </p>
+    </div>
+    ${renderEmptySettingsForm()}`;
+    return;
+  }
+  body.innerHTML = renderFilledSettingsForm(scoreRules);
+}
+
+function renderFilledSettingsForm(rules) {
+  let html = '';
+  for (const g of SETTINGS_GROUPS) {
+    html += `
+      <div class="settings-group">
+        <h4><i class="fas ${g.icon}"></i> ${escapeHtml(g.label)}</h4>
+        <div class="settings-fields">
+          ${g.fields.map(f => {
+            const v = (rules[g.key] && rules[g.key][f.key] !== undefined)
+                      ? rules[g.key][f.key] : '';
+            return `
+              <div class="form-group">
+                <label>${escapeHtml(f.label)}</label>
+                <input type="number" step="any" id="setting-${g.key}-${f.key}" value="${escapeHtml(String(v))}">
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+  return html;
+}
+
+function renderEmptySettingsForm() {
   let html = '';
   for (const g of SETTINGS_GROUPS) {
     html += `
@@ -2137,26 +2528,29 @@ function renderSettingsForm() {
           ${g.fields.map(f => `
             <div class="form-group">
               <label>${escapeHtml(f.label)}</label>
-              <input type="number" step="any" id="setting-${g.key}-${f.key}" value="${getRuleValue(g.key, f.key)}">
+              <input type="number" step="any" id="setting-${g.key}-${f.key}" value="0">
             </div>
           `).join('')}
         </div>
       </div>`;
   }
-  body.innerHTML = html;
+  return html;
 }
 
-function getRuleValue(group, key) {
-  const r = scoreRules || DEFAULT_SCORE_RULES;
-  return (r[group] && r[group][key] !== undefined) ? r[group][key] : '';
+async function reloadSettingsFromFirestore() {
+  await loadScoreRules();
+  renderSettingsForm();
+  showToast(scoreRules ? 'Settings reloaded from Firestore.' : 'Still no settings in Firestore.',
+            scoreRules ? 'success' : 'warning');
 }
 
 async function saveSettings() {
   if (!currentUser || currentUser.role !== 'admin') return;
-  const btn = document.getElementById('saveSettingsBtn');
+
+  const btn  = document.getElementById('saveSettingsBtn');
   const orig = btn.innerHTML;
   btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
-  btn.disabled = true;
+  btn.disabled  = true;
 
   try {
     const newRules = {};
@@ -2164,30 +2558,27 @@ async function saveSettings() {
       newRules[g.key] = {};
       for (const f of g.fields) {
         const el = document.getElementById(`setting-${g.key}-${f.key}`);
-        newRules[g.key][f.key] = parseFloat(el.value) || 0;
+        const n  = parseFloat(el.value);
+        newRules[g.key][f.key] = isNaN(n) ? 0 : n;
       }
     }
-    await db.collection('settings').doc('scoreRules').set({
+    await db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc).set({
       ...newRules,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentDocId
     });
-    scoreRules = newRules;
-    showToast('Settings saved!', 'success');
+
+    await loadScoreRules();
+
+    showToast('Settings saved to Firestore!', 'success');
     closeModal('settingsModal');
   } catch (err) {
     console.error('saveSettings:', err);
     showToast('Save failed: ' + err.message, 'error');
   } finally {
     btn.innerHTML = orig;
-    btn.disabled = false;
+    btn.disabled  = false;
   }
-}
-
-function resetSettingsDefaults() {
-  scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
-  renderSettingsForm();
-  showToast('Defaults restored. Click Save to persist.', 'info');
 }
 
 /* ============================================================
@@ -2201,13 +2592,13 @@ document.addEventListener('keydown', (e) => {
     closeModal('detailLogModal');
   }
   if (e.key === 'Enter' && document.getElementById('loginContainer').style.display !== 'none') {
-    if (!document.getElementById('loginForm').classList.contains('hidden')) handleLogin();
+    if (!document.getElementById('loginForm').classList.contains('hidden'))        handleLogin();
     else if (!document.getElementById('registerForm').classList.contains('hidden')) handleRegister();
-    else if (!document.getElementById('forgotForm').classList.contains('hidden')) handleForgot();
+    else if (!document.getElementById('forgotForm').classList.contains('hidden'))   handleForgot();
   }
 });
 
-console.log('✅ ICD Work Log — Doc ID = emailDocId(email)');
+console.log('✅ ICD Work Log — PDF two-line summary + widened Team Log date column ready.');
 </script>
 </body>
 </html>
