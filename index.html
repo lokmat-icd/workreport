@@ -1102,7 +1102,7 @@ const JOB_SCHEMAS = {
     fields: [
       { key: "pageName", label: "Page Name", type: "text", required: true, placeholder: "e.g., 19Satara Fresh" },
       { key: "advtPct",  label: "Advt %",    type: "select", required: true,
-        options: ["100", "90", "80", "75","70", "60", "50", "40", "30", "25","20", "10"] }
+        options: ["100", "90", "80", "75","70", "60", "50", "40", "30", "25","20", "10", "0"] }
     ]
   },
   typing: {
@@ -1862,7 +1862,7 @@ function summarizePayload(type, p) {
   switch (type) {
     case 'advt':            return `${p.advtType || ''} • ${p.advtName || ''} • ${p.widthCm || 0}×${p.heightCm || 0} cm`;
     case 'paginationAlter': return `${p.pageName || ''} • News Change: ${p.newsChange || 0}`;
-    case 'paginationFresh': return `${p.pageName || ''} • Advt: ${p.advtPct ?? 0}%`;
+    case 'paginationFresh': return `${p.pageName || ''} • Advt: ${p.advtPct || 0}%`;
     case 'typing':          return `${p.articleName || ''} • ${p.words || 0} words`;
     case 'photo':           return `${p.count || 0} photos`;
     case 'pdf':             return summarizePdf(p);
