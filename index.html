@@ -217,6 +217,36 @@ body {
 }
 .filter-bar .btn-reset:hover { background: #f8f9fc; border-color: #ccc; }
 
+/* ============ TEAM LOG STATS CHIPS ============ */
+.stats-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 6px 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  border-left: 3px solid #4fc3f7;
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.stat-chip .chip-label { color: #666; }
+.stat-chip .chip-value {
+  color: #1a1a2e;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stat-chip.grand {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-left-color: #ffc107;
+}
+.stat-chip.grand .chip-label { color: rgba(255,255,255,0.75); }
+.stat-chip.grand .chip-value { color: #ffc107; }
+
 /* ============ EMPLOYEE CARDS ============ */
 .cards-grid {
   display: grid;
@@ -293,7 +323,7 @@ table tr:hover td { background: #f8f9fc; }
 /* Widen the Date/Time column of the Team Log table */
 #teamLogBody table th:first-child,
 #teamLogBody table td:first-child {
-  min-width: 150px;
+  min-width: 180px;
   white-space: nowrap;
 }
 
@@ -721,6 +751,9 @@ table tr:hover td { background: #f8f9fc; }
           </button>
         </div>
 
+        <!-- ---- STATS CHIPS ---- -->
+        <div id="teamLogStats" class="stats-chips"></div>
+
         <div class="table-container">
           <div class="table-header">
             <h3><i class="fas fa-list-alt" style="color:#4fc3f7;"></i> Team Log</h3>
@@ -880,6 +913,15 @@ const PDF_MAIN_EDITIONS = [
   "Main Kolhapur"
 ];
 
+/* Which job types appear as chips in the Team Log stats row */
+const STATS_CHIPS = [
+  { key: 'advt',            label: 'Advt Design' },
+  { key: 'paginationAlter', label: 'Page Alter'  },
+  { key: 'paginationFresh', label: 'Page Fresh'  },
+  { key: 'graphic',         label: 'Graphic'     },
+  { key: 'pdf',             label: 'PDF Making'  }
+];
+
 /* ============================================================
    SETTINGS FIELD DEFINITIONS
    ============================================================ */
@@ -919,7 +961,7 @@ const SETTINGS_GROUPS = [
       { key: 'helloPerPage', label: 'Hello (per page)' }
     ]
   },
-  { key: 'graphic', label: 'AI Image/Graphic/Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
+  { key: 'graphic', label: 'Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
   { key: 'other',   label: 'Other Work',             icon: 'fa-tasks',    fields: [{ key: 'perEntry',        label: 'Per Entry' }] }
 ];
 
@@ -938,13 +980,10 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/* Escape then convert newlines to <br>. Safe against HTML injection,
-   because escaping runs first. */
 function formatDetailHtml(detail) {
   return escapeHtml(detail).replace(/\n/g, '<br>');
 }
 
-/* Field-id-safe version of an edition name */
 function safeId(s) {
   return String(s).replace(/[^a-zA-Z0-9]/g, '_');
 }
@@ -1047,13 +1086,13 @@ const JOB_SCHEMAS = {
     ],
     compute: (p) => { p.areaCm2 = (p.widthCm || 0) * (p.heightCm || 0); return p; }
   },
-    paginationAlter: {
+  paginationAlter: {
     label: "Pagination · Alter",
     icon: "fa-pen-to-square",
     subtitle: "Alteration of existing pages",
     fields: [
-      { key: "pageName",   label: "Page Name",   type: "text",   required: true, placeholder: "e.g., 19Satara Class" },
-	  { key: "newsChange", label: "News Change", type: "number", min: 0, required: true }
+      { key: "newsChange", label: "News Change", type: "number", min: 0, required: true },
+      { key: "pageName",   label: "Page Name",   type: "text",   required: true, placeholder: "e.g., 19Satara Class" }
     ]
   },
   paginationFresh: {
@@ -1087,7 +1126,7 @@ const JOB_SCHEMAS = {
     fields: [{ key: "pages", label: "Pages Uploaded", type: "number", min: 1, max: 100, required: true }]
   },
   graphic: {
-    label: "AI Image/Graphic/Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
+    label: "Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
     fields: [
       { key: "name",   label: "Graphic Name", type: "text",   required: true },
       { key: "number", label: "Number",       type: "number", min: 0, required: true }
@@ -1659,15 +1698,13 @@ async function submitEntry(type) {
   const occurredStr = occurredEl.value;
   if (!occurredStr) { showToast('Please pick a date and time', 'warning'); return; }
 
-   if (schema.compute) schema.compute(payload);
+  if (schema.compute) schema.compute(payload);
 
   const rawScore = computeScore(type, payload);
   if (rawScore === null) {
     showToast('Score settings unavailable. Cannot compute score.', 'error');
     return;
   }
-  // Round to 2 decimals before writing to Firestore, so stored values
-  // never carry float noise like 1.4999999999.
   const score = Math.round(rawScore * 100) / 100;
 
   const occurredDate = new Date(occurredStr);
@@ -1835,7 +1872,6 @@ function summarizePayload(type, p) {
   }
 }
 
-/* PDF summary across two lines (Hello line, Main line) */
 function summarizePdf(p) {
   const ed = p.editions || {};
   const hello = ed.hello || {};
@@ -1898,8 +1934,6 @@ function openEditEntry(entryId) {
   openModal('editModal');
 
   if (hasEditionGrid) {
-    /* The renderEditionGrid inserts a datetime input in edit mode with the
-       id "field-pdf-occurredAt" — rename it to avoid collision. */
     const el = document.getElementById('field-' + entry.type + '-occurredAt');
     if (el) el.id = 'edit-' + entry.type + '-occurredAt-readonly';
     attachPdfGridListeners(entry.type, 'edit');
@@ -1937,8 +1971,7 @@ async function saveEditedEntry() {
     }
   }
 
-   if (schema.compute) schema.compute(payload);
-
+  if (schema.compute) schema.compute(payload);
   const rawScore = computeScore(editingEntry.type, payload);
   if (rawScore === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
   const score = Math.round(rawScore * 100) / 100;
@@ -2409,9 +2442,37 @@ function renderTeamLog() {
   teamLogAllRows = rows;
   teamLogShown = Math.min(TEAM_LOG_PAGE, rows.length);
 
+  renderTeamLogStats(rows);
   renderTeamLogRows();
 }
 
+/* ---------- Stats chips ---------- */
+function renderTeamLogStats(rows) {
+  const container = document.getElementById('teamLogStats');
+  if (!container) return;
+
+  const sums = {};
+  STATS_CHIPS.forEach(c => { sums[c.key] = 0; });
+
+  rows.forEach(e => {
+    if (sums[e.type] === undefined) return;
+    sums[e.type] += (e.score || 0);
+  });
+
+  let html = '';
+  STATS_CHIPS.forEach(c => {
+    const val = Math.round(sums[c.key] || 0);
+    html += `
+      <div class="stat-chip">
+        <span class="chip-label">${escapeHtml(c.label)} :</span>
+        <span class="chip-value">${val}</span>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+/* ---------- Table rows ---------- */
 function renderTeamLogRows() {
   const body     = document.getElementById('teamLogBody');
   const countEl  = document.getElementById('teamLogCount');
@@ -2603,7 +2664,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — PDF two-line summary + widened Team Log date column ready.');
+console.log('✅ ICD Work Log — Team Log stats chips ready.');
 </script>
 </body>
 </html>
