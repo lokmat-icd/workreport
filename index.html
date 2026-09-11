@@ -1659,13 +1659,16 @@ async function submitEntry(type) {
   const occurredStr = occurredEl.value;
   if (!occurredStr) { showToast('Please pick a date and time', 'warning'); return; }
 
-  if (schema.compute) schema.compute(payload);
+   if (schema.compute) schema.compute(payload);
 
-  const score = computeScore(type, payload);
-  if (score === null) {
+  const rawScore = computeScore(type, payload);
+  if (rawScore === null) {
     showToast('Score settings unavailable. Cannot compute score.', 'error');
     return;
   }
+  // Round to 2 decimals before writing to Firestore, so stored values
+  // never carry float noise like 1.4999999999.
+  const score = Math.round(rawScore * 100) / 100;
 
   const occurredDate = new Date(occurredStr);
 
@@ -1934,9 +1937,11 @@ async function saveEditedEntry() {
     }
   }
 
-  if (schema.compute) schema.compute(payload);
-  const score = computeScore(editingEntry.type, payload);
-  if (score === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
+   if (schema.compute) schema.compute(payload);
+
+  const rawScore = computeScore(editingEntry.type, payload);
+  if (rawScore === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
+  const score = Math.round(rawScore * 100) / 100;
 
   const btn = document.getElementById('editSaveBtn');
   const orig = btn.innerHTML;
