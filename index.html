@@ -2428,8 +2428,6 @@ function renderTeamLog() {
   const fromStr = document.getElementById('logFilterFrom').value;
   const toStr   = document.getElementById('logFilterTo').value;
 
-  let rows = adminEntriesCache.slice();
-
   const unitMatch = (u) => !unit || u.unit === unit;
   const wpMatch   = (u) => !wp   || u.workplace === wp;
   const empMatch  = (u) => !emp  || (u.emailDocId || u.docId) === emp;
