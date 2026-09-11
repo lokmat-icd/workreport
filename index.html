@@ -10,6 +10,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -82,6 +85,7 @@ body {
 .btn-danger { background: linear-gradient(135deg, #ef5350, #d32f2f); color: #fff; }
 .btn-outline { background: transparent; border: 2px solid #e8ecf1; color: #555; }
 .btn-outline:hover { background: #f8f9fc; border-color: #ccc; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
 .spinner-inline {
@@ -128,6 +132,9 @@ body {
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none; border-color: #667eea; background: #fff;
 }
+.form-group input:disabled, .form-group input[readonly] {
+  background: #f0f2f5; cursor: not-allowed; color: #888;
+}
 .checkbox-row {
   display: flex; align-items: center; gap: 8px;
   font-size: 13px; color: #555; margin: 4px 0 12px 0;
@@ -154,22 +161,155 @@ body {
 .page-title { margin-bottom: 16px; }
 .page-title h2 { font-size: 20px; font-weight: 700; }
 .page-title p { color: #888; font-size: 13px; }
-.quick-jump {
+
+/* ============ TABS ============ */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 18px;
+  background: #fff; border-radius: 12px; padding: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.tab-btn {
+  flex: 1; padding: 10px 18px; border: none; border-radius: 8px;
+  background: transparent; color: #666; cursor: pointer;
+  font-size: 14px; font-weight: 600; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s ease;
+}
+.tab-btn:hover { background: #f8f9fc; color: #1a1a2e; }
+.tab-btn.active {
+  background: linear-gradient(135deg, #4fc3f7, #2196f3);
+  color: #fff; box-shadow: 0 4px 12px rgba(33,150,243,0.35);
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ============ FILTERS BAR ============ */
+.filter-bar {
   background: #fff; border-radius: 12px;
   padding: 14px 18px; margin-bottom: 18px;
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: end; gap: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
 }
-.quick-jump label { font-size: 13px; font-weight: 600; color: #555; }
-.quick-jump select {
-  flex: 1; min-width: 200px;
-  padding: 9px 12px; border: 2px solid #e8ecf1;
-  border-radius: 8px; font-size: 13px;
-  font-family: inherit; background: #fafbfc; cursor: pointer;
+.filter-bar .filter-item {
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1; min-width: 150px;
 }
-.quick-jump select:focus { outline: none; border-color: #4fc3f7; }
+.filter-bar .filter-item label {
+  font-size: 11px; font-weight: 600; color: #666;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.filter-bar select, .filter-bar input[type="date"] {
+  width: 100%; padding: 9px 12px;
+  border: 2px solid #e8ecf1; border-radius: 8px;
+  font-size: 13px; font-family: inherit;
+  background: #fafbfc; cursor: pointer;
+}
+.filter-bar select:focus, .filter-bar input:focus {
+  outline: none; border-color: #4fc3f7; background: #fff;
+}
+.filter-bar .btn-reset {
+  padding: 9px 14px; border: 2px solid #e8ecf1; border-radius: 8px;
+  background: transparent; color: #666; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  transition: all 0.2s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+  align-self: end;
+}
+.filter-bar .btn-reset:hover { background: #f8f9fc; border-color: #ccc; }
 
-/* ============ ACCORDION ============ */
+/* ============ EMPLOYEE CARDS ============ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+.emp-card {
+  background: #fff; border-radius: 14px;
+  padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.04);
+  display: flex; flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+.emp-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+.emp-card-head {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 14px;
+}
+.emp-avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(135deg, #4fc3f7, #2196f3);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 18px; flex-shrink: 0;
+}
+.emp-info { flex: 1; min-width: 0; }
+.emp-info h3 {
+  font-size: 15px; font-weight: 700; color: #1a1a2e;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.emp-info .meta {
+  font-size: 12px; color: #888; margin-top: 3px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.emp-info .meta span { display: inline-flex; align-items: center; gap: 4px; }
+.emp-info .meta i { color: #4fc3f7; font-size: 10px; }
+
+.chart-wrap {
+  position: relative; height: 220px; margin-bottom: 14px;
+}
+.emp-card-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  border-top: 1px solid #f0f2f5; padding-top: 12px;
+}
+.emp-card-actions .btn { font-size: 12px; padding: 7px 14px; }
+
+/* ============ TABLE ============ */
+.table-container {
+  background: #fff; border-radius: 14px;
+  overflow: hidden; margin-top: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.table-header {
+  padding: 14px 18px; background: #f8f9fc;
+  border-bottom: 1px solid #e8ecf1;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.table-header h3 { font-size: 15px; font-weight: 600; }
+.table-header .badge {
+  background: #e8ecf1; padding: 3px 10px;
+  border-radius: 16px; font-size: 11px;
+  color: #666; font-weight: 500;
+}
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table th {
+  padding: 10px 14px; text-align: left;
+  font-weight: 600; color: #555; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  background: #f8f9fc; border-bottom: 2px solid #e8ecf1; white-space: nowrap;
+}
+table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; color: #333; }
+table tr:hover td { background: #f8f9fc; }
+.type-badge {
+  padding: 3px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+  background: #e3f2fd; color: #0d47a1; white-space: nowrap;
+}
+.row-btn {
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: transparent; color: #888; cursor: pointer; font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.row-btn:hover { background: #f0f2f5; color: #333; }
+.row-btn.edit:hover { background: #e3f2fd; color: #1976d2; }
+.row-btn.delete:hover { background: #ffebee; color: #d32f2f; }
+.lock-label { font-size: 11px; color: #bbb; display: block; text-align: center; }
+.empty-state { text-align: center; padding: 40px 20px; color: #888; }
+.empty-state i { font-size: 36px; color: #ccc; margin-bottom: 10px; display: block; }
+.empty-state h3 { font-size: 15px; color: #555; margin-bottom: 4px; }
+.empty-state p { font-size: 13px; color: #999; }
+
+/* ============ ACCORDION (employee) ============ */
 .job-section {
   background: #fff; border-radius: 12px;
   margin-bottom: 12px; overflow: hidden;
@@ -222,53 +362,6 @@ body {
   margin-top: 18px;
   display: flex; gap: 10px; align-items: center;
 }
-
-/* ============ RECENT ENTRIES ============ */
-.table-container {
-  background: #fff; border-radius: 14px;
-  overflow: hidden; margin-top: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.table-header {
-  padding: 14px 18px; background: #f8f9fc;
-  border-bottom: 1px solid #e8ecf1;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.table-header h3 { font-size: 15px; font-weight: 600; }
-.table-header .badge {
-  background: #e8ecf1; padding: 3px 10px;
-  border-radius: 16px; font-size: 11px;
-  color: #666; font-weight: 500;
-}
-.table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-table th {
-  padding: 10px 14px; text-align: left;
-  font-weight: 600; color: #555; font-size: 11px;
-  text-transform: uppercase; letter-spacing: 0.3px;
-  background: #f8f9fc; border-bottom: 2px solid #e8ecf1; white-space: nowrap;
-}
-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; color: #333; }
-table tr:hover td { background: #f8f9fc; }
-.type-badge {
-  padding: 3px 10px; border-radius: 10px;
-  font-size: 11px; font-weight: 600;
-  background: #e3f2fd; color: #0d47a1; white-space: nowrap;
-}
-.row-btn {
-  width: 28px; height: 28px; border: none; border-radius: 6px;
-  background: transparent; color: #888; cursor: pointer; font-size: 12px;
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: all 0.15s ease;
-}
-.row-btn:hover { background: #f0f2f5; color: #333; }
-.row-btn.edit:hover { background: #e3f2fd; color: #1976d2; }
-.row-btn.delete:hover { background: #ffebee; color: #d32f2f; }
-.lock-label { font-size: 11px; color: #bbb; display: block; text-align: center; }
-.empty-state { text-align: center; padding: 40px 20px; color: #888; }
-.empty-state i { font-size: 36px; color: #ccc; margin-bottom: 10px; display: block; }
-.empty-state h3 { font-size: 15px; color: #555; margin-bottom: 4px; }
-.empty-state p { font-size: 13px; color: #999; }
 
 /* ============ MODAL ============ */
 .modal-overlay {
@@ -357,6 +450,7 @@ table tr:hover td { background: #f8f9fc; }
   .app-header .title-block { order: -1; width: 100%; }
   .app-header .logo img { width: 110px; max-height: 50px; }
   .app-header .title-block h1 { font-size: 18px; }
+  .cards-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .app-header { padding: 12px 14px; }
@@ -454,44 +548,121 @@ table tr:hover td { background: #f8f9fc; }
   </header>
 
   <main class="app-main">
-    <div class="page-title">
-      <h2>Record your daily workload</h2>
-      <p>Click any job type to expand and record your work</p>
-    </div>
 
-    <div class="quick-jump">
-      <label><i class="fas fa-bolt" style="color:#4fc3f7;"></i> Jump to:</label>
-      <select id="quickJump" onchange="jumpToJob(this.value)">
-        <option value="">-- Select job type --</option>
-        <option value="advt">Advt Design</option>
-        <option value="pagination">Pagination</option>
-        <option value="typing">Typing</option>
-        <option value="photo">Photo Editing</option>
-        <option value="pdf">PDF Making</option>
-        <option value="epaper">Epaper</option>
-        <option value="graphic">Graphic / Illustration</option>
-        <option value="other">Other Work</option>
-      </select>
-    </div>
-
-    <div id="jobSections"></div>
-
-    <div class="table-container">
-      <div class="table-header">
-        <h3><i class="fas fa-history" style="color:#4fc3f7;"></i> Recent Entries</h3>
-        <span class="badge" id="recentCount">0 entries</span>
+    <!-- ============ EMPLOYEE VIEW ============ -->
+    <div id="employeeView" style="display:none;">
+      <div class="page-title">
+        <h2>Record your daily workload</h2>
+        <p>Click any job type to expand and record your work</p>
       </div>
-      <div class="table-wrapper" id="recentBody">
-        <div class="empty-state">
-          <i class="fas fa-inbox"></i>
-          <h3>No entries yet</h3>
-          <p>Your recent entries will appear here.</p>
+
+      <div id="jobSections"></div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <h3><i class="fas fa-history" style="color:#4fc3f7;"></i> Recent Entries</h3>
+          <span class="badge" id="recentCount">0 entries</span>
+        </div>
+        <div class="table-wrapper" id="recentBody">
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>No entries yet</h3>
+            <p>Your recent entries will appear here.</p>
+          </div>
+        </div>
+        <div style="padding:10px 18px;background:#f8f9fc;border-top:1px solid #e8ecf1;font-size:11px;color:#888;">
+          <i class="fas fa-info-circle"></i> Entries are editable and deletable for 10 hours after the work time.
         </div>
       </div>
-      <div style="padding:10px 18px;background:#f8f9fc;border-top:1px solid #e8ecf1;font-size:11px;color:#888;">
-        <i class="fas fa-info-circle"></i> Entries are editable and deletable for 10 hours after the work time.
+    </div>
+
+    <!-- ============ ADMIN VIEW ============ -->
+    <div id="adminView" style="display:none;">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabBtnDashboard" onclick="switchAdminTab('dashboard')">
+          <i class="fas fa-chart-bar"></i> Dashboard
+        </button>
+        <button class="tab-btn" id="tabBtnTeamLog" onclick="switchAdminTab('teamlog')">
+          <i class="fas fa-list-alt"></i> Team Log
+        </button>
+      </div>
+
+      <!-- ---- TAB: DASHBOARD ---- -->
+      <div id="tabDashboard" class="tab-pane active">
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>Unit</label>
+            <select id="dashFilterUnit" onchange="onDashUnitChange()"></select>
+          </div>
+          <div class="filter-item">
+            <label>Workplace</label>
+            <select id="dashFilterWorkplace" onchange="onDashFilterChange()"></select>
+          </div>
+          <div class="filter-item">
+            <label>From</label>
+            <input type="date" id="dashFilterFrom" onchange="onDashFilterChange()">
+          </div>
+          <div class="filter-item">
+            <label>To</label>
+            <input type="date" id="dashFilterTo" onchange="onDashFilterChange()">
+          </div>
+          <button class="btn-reset" onclick="resetDashFilters()" title="Reset filters">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+
+        <div id="dashCards" class="cards-grid"></div>
+      </div>
+
+      <!-- ---- TAB: TEAM LOG ---- -->
+      <div id="tabTeamLog" class="tab-pane">
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>Unit</label>
+            <select id="logFilterUnit" onchange="onLogUnitChange()"></select>
+          </div>
+          <div class="filter-item">
+            <label>Workplace</label>
+            <select id="logFilterWorkplace" onchange="onLogWorkplaceChange()"></select>
+          </div>
+          <div class="filter-item">
+            <label>Employee</label>
+            <select id="logFilterEmployee" onchange="onLogFilterChange()"></select>
+          </div>
+          <div class="filter-item">
+            <label>From</label>
+            <input type="date" id="logFilterFrom" onchange="onLogFilterChange()">
+          </div>
+          <div class="filter-item">
+            <label>To</label>
+            <input type="date" id="logFilterTo" onchange="onLogFilterChange()">
+          </div>
+          <button class="btn-reset" onclick="resetLogFilters()" title="Reset filters">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+
+        <div class="table-container">
+          <div class="table-header">
+            <h3><i class="fas fa-list-alt" style="color:#4fc3f7;"></i> Team Log</h3>
+            <span class="badge" id="teamLogCount">0 entries</span>
+          </div>
+          <div class="table-wrapper" id="teamLogBody">
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <h3>No entries</h3>
+              <p>No entries match the current filters.</p>
+            </div>
+          </div>
+          <div id="teamLogMoreWrap" style="padding:12px 18px;background:#f8f9fc;border-top:1px solid #e8ecf1;text-align:center;display:none;">
+            <button class="btn btn-outline btn-sm" id="teamLogMoreBtn" onclick="teamLogLoadMore()">
+              <i class="fas fa-chevron-down"></i> Load more
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
   </main>
 </div>
 
@@ -549,12 +720,51 @@ table tr:hover td { background: #f8f9fc; }
   </div>
 </div>
 
+<!-- ==================== DETAIL LOG MODAL ==================== -->
+<div class="modal-overlay" id="detailLogModal">
+  <div class="modal" style="max-width:900px;">
+    <div class="modal-header">
+      <h2><i class="fas fa-clipboard-list"></i> <span id="detailLogTitle">Detail Log</span></h2>
+      <button class="modal-close" onclick="closeModal('detailLogModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="filter-bar" style="margin-bottom:16px;box-shadow:none;background:#fafbfc;">
+        <div class="filter-item">
+          <label>Job Type</label>
+          <select id="detailFilterJob" onchange="renderDetailLog()"></select>
+        </div>
+        <div class="filter-item">
+          <label>From</label>
+          <input type="date" id="detailFilterFrom" onchange="renderDetailLog()">
+        </div>
+        <div class="filter-item">
+          <label>To</label>
+          <input type="date" id="detailFilterTo" onchange="renderDetailLog()">
+        </div>
+        <button class="btn-reset" onclick="resetDetailFilters()" title="Reset">
+          <i class="fas fa-undo"></i> Reset
+        </button>
+      </div>
+      <div class="table-wrapper" id="detailLogBody">
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No entries</h3>
+          <p>No entries match the current filters.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('detailLogModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== TOASTS ==================== -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
 /* ============================================================
-   FIREBASE INIT — workload-17bc0
+   FIREBASE INIT
    ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyDMIkPvf3ve6oXTkKLm1tjLnzyoKxzooSQ",
@@ -575,16 +785,16 @@ const db = firebase.firestore();
    ============================================================ */
 const EDIT_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 hours
 
-/* ============================================================
-   🔑 EMAIL -> FIRESTORE DOC ID
-   ------------------------------------------------------------
-   vmahavir@gmail.com   ->   vmahavir_gmail_com
-   This transformed value is used as the DOCUMENT ID.
-   The original email is stored inside as the `uid` field.
-   ============================================================ */
 function emailDocId(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/@/g, '_').replace(/\./g, '_');
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function showToast(message, type = 'info') {
@@ -609,13 +819,6 @@ function showToast(message, type = 'info') {
   }, 4000);
 }
 
-function escapeHtml(s) {
-  if (s === null || s === undefined) return '';
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
 function showMessage(id, msg, type = 'error') {
   const el = document.getElementById(id);
   el.textContent = msg;
@@ -634,15 +837,30 @@ function fmtTime(ts) {
   return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function todayRange() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  return {
-    start: firebase.firestore.Timestamp.fromDate(start),
-    end: firebase.firestore.Timestamp.fromDate(end)
-  };
+function fmtDate(ts) {
+  if (!ts) return '-';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-IN', { dateStyle: 'medium' });
+}
+
+/* Build a Timestamp range from YYYY-MM-DD strings (inclusive). */
+function dateRangeFromInputs(fromStr, toStr) {
+  const range = { start: null, end: null };
+  if (fromStr) {
+    const d = new Date(fromStr + 'T00:00:00');
+    range.start = firebase.firestore.Timestamp.fromDate(d);
+  }
+  if (toStr) {
+    const d = new Date(toStr + 'T23:59:59.999');
+    range.end = firebase.firestore.Timestamp.fromDate(d);
+  }
+  return range;
+}
+
+function todayStr() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
 function toTimestamp(entry) {
@@ -731,9 +949,6 @@ const JOB_SCHEMAS = {
   }
 };
 
-/* ============================================================
-   DEFAULT SCORE RULES
-   ============================================================ */
 const DEFAULT_SCORE_RULES = {
   advt: { fullPage: 12, aboveHalf: 6, aboveQuarter: 3, belowQuarter: 2, sizeA: 1.5, sizeB: 1, sizeC: 0.5, brandingMultiplier: 0.008 },
   pagination: { alterCity: 3, alterDist: 0.1, classifiedMultiplier: 0.75 },
@@ -748,8 +963,8 @@ const DEFAULT_SCORE_RULES = {
 /* ============================================================
    STATE
    ============================================================ */
-let currentDocId = null;     // email-based document ID (e.g. vmahavir_gmail_com)
-let currentUser = null;      // user doc data
+let currentDocId = null;
+let currentUser = null;
 let scoreRules = null;
 let todayEntries = [];
 let recentEntries = [];
@@ -757,6 +972,24 @@ let unsubToday = null;
 let unsubRecent = null;
 let editingEntry = null;
 let deletingEntry = null;
+
+/* Admin state */
+let allUsersCache = [];      // [{docId, ...userData}]
+let adminEntriesCache = [];  // all entries across users (used for dashboard + team log)
+let adminListenersAttached = false;
+let currentAdminTab = 'dashboard';
+
+/* Team Log pagination */
+let teamLogAllRows = [];
+let teamLogShown = 0;
+const TEAM_LOG_PAGE = 100;
+
+/* Detail Log state */
+let detailLogUser = null;
+let detailLogEntries = [];
+
+/* Chart instances */
+const chartInstances = {};
 
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
@@ -834,16 +1067,12 @@ async function handleRegister() {
     const user = cred.user;
     await user.updateProfile({ displayName: fullName });
 
-    // ============================================================
-    // ⭐ DOC ID = emailDocId(email)   →   vmahavir_gmail_com
-    // ⭐ `uid` field = original email →   vmahavir@gmail.com
-    // ============================================================
     const docId = emailDocId(email);
 
     await db.collection('users').doc(docId).set({
-      uid: email,                     // <-- ORIGINAL email as uid
+      uid: email,
       email: email,
-      emailDocId: docId,              // <-- "vmahavir_gmail_com"
+      emailDocId: docId,
       fullName,
       birthDate,
       unit,
@@ -887,6 +1116,7 @@ async function handleForgot() {
 
 async function handleLogout() {
   detachListeners();
+  detachAdminListeners();
   await auth.signOut();
 }
 
@@ -895,9 +1125,7 @@ async function handleLogout() {
    ============================================================ */
 auth.onAuthStateChanged(async (user) => {
   if (user) {
-    // ⭐ DOC ID = emailDocId(email)
     currentDocId = emailDocId(user.email);
-
     await loadUserDoc();
     await loadScoreRules();
 
@@ -908,12 +1136,20 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('userDisplay').textContent = displayName;
     document.getElementById('userBadgeEmail').textContent = user.email || '';
 
+    const isAdmin = currentUser && currentUser.role === 'admin';
     const gear = document.getElementById('settingsBtn');
-    if (currentUser && currentUser.role === 'admin') gear.style.display = 'inline-flex';
-    else gear.style.display = 'none';
+    gear.style.display = isAdmin ? 'inline-flex' : 'none';
 
-    renderAccordion();
-    attachListeners();
+    if (isAdmin) {
+      document.getElementById('employeeView').style.display = 'none';
+      document.getElementById('adminView').style.display = 'block';
+      await initAdminDashboard();
+    } else {
+      document.getElementById('employeeView').style.display = 'block';
+      document.getElementById('adminView').style.display = 'none';
+      renderAccordion();
+      attachListeners();
+    }
   } else {
     currentDocId = null;
     currentUser = null;
@@ -922,12 +1158,10 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('settingsBtn').style.display = 'none';
     detachListeners();
+    detachAdminListeners();
   }
 });
 
-/* ============================================================
-   Load user doc using email-based doc ID
-   ============================================================ */
 async function loadUserDoc() {
   try {
     if (!currentDocId) { currentUser = { role: 'employee' }; return; }
@@ -935,7 +1169,6 @@ async function loadUserDoc() {
     if (doc.exists) {
       currentUser = doc.data();
     } else {
-      // Auto-create fallback if missing
       const fallback = {
         uid: auth.currentUser.email,
         email: auth.currentUser.email,
@@ -990,7 +1223,7 @@ function computeScore(type, payload) {
     case 'pagination': {
       const ratio = payload.ratio || 0;
       if (payload.pgnType === 'Classified') return ratio * r.pagination.classifiedMultiplier;
-      if (payload.pgnType === 'Alter') return r.pagination.alterDist;
+      if (payload.pgnType === 'Alter') return r.pagination.altered;
       return 0;
     }
     case 'other': return r.other.perEntry || 0;
@@ -999,7 +1232,7 @@ function computeScore(type, payload) {
 }
 
 /* ============================================================
-   ACCORDION
+   EMPLOYEE: ACCORDION
    ============================================================ */
 function renderAccordion() {
   const container = document.getElementById('jobSections');
@@ -1079,23 +1312,11 @@ function renderField(f, type, mode, value) {
     <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
 }
 
-function jumpToJob(type) {
-  if (!type) return;
-  const section = document.getElementById(`section-${type}`);
-  if (section) {
-    section.open = true;
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  document.getElementById('quickJump').value = '';
-}
-
 /* ============================================================
-   SUBMIT ENTRY
-   ------------------------------------------------------------
-   Path: users/{emailDocId}/entries/{autoId}
+   EMPLOYEE: SUBMIT ENTRY (writes BOTH subcollection + top-level)
    ============================================================ */
 async function submitEntry(type) {
-  if (!currentDocId) return;
+  if (!currentDocId || !currentUser) return;
   const schema = JOB_SCHEMAS[type];
   const payload = {};
 
@@ -1119,15 +1340,41 @@ async function submitEntry(type) {
   if (schema.compute) schema.compute(payload);
   const score = computeScore(type, payload);
 
+  const occurredDate = new Date(occurredStr);
+
+  // Shared data — one doc for the user subcollection, one for the top-level entries
+  const sharedBase = {
+    uid: auth.currentUser.email,
+    emailDocId: currentDocId,
+    fullName: currentUser.fullName || auth.currentUser.displayName || '',
+    unit: currentUser.unit || '',
+    workplace: currentUser.workplace || '',
+    type,
+    occurredAt: firebase.firestore.Timestamp.fromDate(occurredDate),
+    payload,
+    score
+  };
+
   try {
-    await db.collection('users').doc(currentDocId).collection('entries').add({
-      uid: auth.currentUser.email,     // original email
-      type,
-      occurredAt: firebase.firestore.Timestamp.fromDate(new Date(occurredStr)),
+    const batch = db.batch();
+    const userEntryRef = db.collection('users').doc(currentDocId).collection('entries').doc();
+    const topEntryRef  = db.collection('entries').doc(userEntryRef.id);
+
+    batch.set(userEntryRef, {
+      uid: sharedBase.uid,
+      type: sharedBase.type,
+      occurredAt: sharedBase.occurredAt,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      payload,
-      score
+      payload: sharedBase.payload,
+      score: sharedBase.score
     });
+
+    batch.set(topEntryRef, {
+      ...sharedBase,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
 
     for (const f of schema.fields) {
       const el = document.getElementById(`new-${type}-${f.key}`);
@@ -1144,13 +1391,14 @@ async function submitEntry(type) {
 }
 
 /* ============================================================
-   LIVE LISTENERS
+   EMPLOYEE: LISTENERS
    ============================================================ */
 function attachListeners() {
   detachListeners();
   if (!currentDocId) return;
 
-  const { start, end } = todayRange();
+  const start = firebase.firestore.Timestamp.fromDate(new Date(new Date().setHours(0,0,0,0)));
+  const end   = firebase.firestore.Timestamp.fromDate(new Date(new Date().setHours(24,0,0,0)));
   const userRef = db.collection('users').doc(currentDocId);
 
   unsubToday = userRef.collection('entries')
@@ -1248,7 +1496,7 @@ function summarizePayload(type, p) {
 }
 
 /* ============================================================
-   EDIT ENTRY (within 10h window)
+   EMPLOYEE: EDIT / DELETE ENTRY
    ============================================================ */
 function openEditEntry(entryId) {
   const entry = recentEntries.find(e => e.id === entryId);
@@ -1263,8 +1511,8 @@ function openEditEntry(entryId) {
   schema.fields.forEach(f => { html += renderField(f, entry.type, 'edit', entry.payload[f.key]); });
   const occStr = toLocalInputValue(entry.occurredAt);
   html += `<div class="form-group">
-             <label>Date &amp; Time <small style="color:#888;font-weight:400;">(read-only)</small></label>
-             <input type="datetime-local" value="${occStr}" readonly style="background:#f0f2f5;cursor:not-allowed;">
+             <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
+             <input type="datetime-local" value="${occStr}" disabled>
            </div></div>`;
   document.getElementById('editModalBody').innerHTML = html;
   openModal('editModal');
@@ -1294,11 +1542,21 @@ async function saveEditedEntry() {
   btn.disabled = true;
 
   try {
-    await db.collection('users').doc(currentDocId)
-      .collection('entries').doc(editingEntry.id).update({
-        payload, score,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+    const batch = db.batch();
+    const userEntryRef = db.collection('users').doc(currentDocId).collection('entries').doc(editingEntry.id);
+    const topEntryRef  = db.collection('entries').doc(editingEntry.id);
+
+    batch.update(userEntryRef, {
+      payload, score,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    batch.set(topEntryRef, {
+      payload, score,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    await batch.commit();
+
     showToast('Entry updated', 'success');
     closeModal('editModal');
     editingEntry = null;
@@ -1311,9 +1569,6 @@ async function saveEditedEntry() {
   }
 }
 
-/* ============================================================
-   DELETE ENTRY (within 10h window)
-   ============================================================ */
 function openDeleteEntry(entryId) {
   const entry = recentEntries.find(e => e.id === entryId);
   if (!entry) { showToast('Entry not found', 'error'); return; }
@@ -1328,8 +1583,11 @@ function openDeleteEntry(entryId) {
 async function confirmDeleteEntry() {
   if (!deletingEntry || !currentDocId) return;
   try {
-    await db.collection('users').doc(currentDocId)
-      .collection('entries').doc(deletingEntry.id).delete();
+    const batch = db.batch();
+    batch.delete(db.collection('users').doc(currentDocId).collection('entries').doc(deletingEntry.id));
+    batch.delete(db.collection('entries').doc(deletingEntry.id));
+    await batch.commit();
+
     showToast('Entry deleted', 'success');
     closeModal('deleteEntryModal');
     deletingEntry = null;
@@ -1337,6 +1595,496 @@ async function confirmDeleteEntry() {
     console.error('delete:', err);
     showToast('Delete failed: ' + err.message, 'error');
   }
+}
+
+/* ============================================================
+   ADMIN: INITIALIZATION
+   ============================================================ */
+async function initAdminDashboard() {
+  // Default dates = today
+  const t = todayStr();
+  document.getElementById('dashFilterFrom').value = t;
+  document.getElementById('dashFilterTo').value = t;
+  document.getElementById('logFilterFrom').value = t;
+  document.getElementById('logFilterTo').value = t;
+
+  await loadAllUsersAndEntries();
+
+  populateDashUnitSelect();
+  populateDashWorkplaceSelect();
+  populateLogUnitSelect();
+  populateLogWorkplaceSelect();
+  populateLogEmployeeSelect();
+
+  renderDashboard();
+  renderTeamLog();
+}
+
+async function loadAllUsersAndEntries() {
+  try {
+    const usersSnap = await db.collection('users').get();
+    allUsersCache = usersSnap.docs.map(d => ({ docId: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('load users:', e);
+    allUsersCache = [];
+  }
+  try {
+    const entriesSnap = await db.collection('entries').orderBy('occurredAt', 'desc').get();
+    adminEntriesCache = entriesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('load entries:', e);
+    adminEntriesCache = [];
+  }
+
+  if (!adminListenersAttached) {
+    adminListenersAttached = true;
+    db.collection('entries').orderBy('occurredAt', 'desc').limit(2000)
+      .onSnapshot(snap => {
+        adminEntriesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderDashboard();
+        renderTeamLog();
+      }, err => console.error('entries snapshot:', err));
+  }
+}
+
+function detachAdminListeners() {
+  adminListenersAttached = false;
+  allUsersCache = [];
+  adminEntriesCache = [];
+}
+
+/* -------- Filter option population -------- */
+function uniqueSorted(arr) {
+  return Array.from(new Set(arr.filter(Boolean))).sort();
+}
+
+function populateDashUnitSelect() {
+  const units = uniqueSorted(allUsersCache.map(u => u.unit));
+  const sel = document.getElementById('dashFilterUnit');
+  sel.innerHTML = `<option value="">All Units</option>` +
+    units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+}
+
+function populateDashWorkplaceSelect() {
+  const unit = document.getElementById('dashFilterUnit').value;
+  const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
+  const wps = uniqueSorted(pool.map(u => u.workplace));
+  const sel = document.getElementById('dashFilterWorkplace');
+  sel.innerHTML = `<option value="">All Workplaces</option>` +
+    wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
+}
+
+function populateLogUnitSelect() {
+  const units = uniqueSorted(allUsersCache.map(u => u.unit));
+  const sel = document.getElementById('logFilterUnit');
+  sel.innerHTML = `<option value="">All Units</option>` +
+    units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+}
+
+function populateLogWorkplaceSelect() {
+  const unit = document.getElementById('logFilterUnit').value;
+  const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
+  const wps = uniqueSorted(pool.map(u => u.workplace));
+  const sel = document.getElementById('logFilterWorkplace');
+  sel.innerHTML = `<option value="">All Workplaces</option>` +
+    wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
+}
+
+function populateLogEmployeeSelect() {
+  const unit = document.getElementById('logFilterUnit').value;
+  const wp = document.getElementById('logFilterWorkplace').value;
+  let pool = allUsersCache;
+  if (unit) pool = pool.filter(u => u.unit === unit);
+  if (wp)   pool = pool.filter(u => u.workplace === wp);
+  pool = pool.slice().sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+
+  const sel = document.getElementById('logFilterEmployee');
+  sel.innerHTML = `<option value="">All Employees</option>` +
+    pool.map(u => `<option value="${escapeHtml(u.emailDocId || u.docId)}">${escapeHtml(u.fullName || u.email || u.docId)}</option>`).join('');
+}
+
+/* -------- Filter change handlers -------- */
+function onDashUnitChange() {
+  document.getElementById('dashFilterWorkplace').value = '';
+  populateDashWorkplaceSelect();
+  onDashFilterChange();
+}
+function onDashFilterChange() {
+  renderDashboard();
+}
+
+function onLogUnitChange() {
+  document.getElementById('logFilterWorkplace').value = '';
+  document.getElementById('logFilterEmployee').value = '';
+  populateLogWorkplaceSelect();
+  populateLogEmployeeSelect();
+  onLogFilterChange();
+}
+function onLogWorkplaceChange() {
+  document.getElementById('logFilterEmployee').value = '';
+  populateLogEmployeeSelect();
+  onLogFilterChange();
+}
+function onLogFilterChange() {
+  renderTeamLog();
+}
+
+function resetDashFilters() {
+  document.getElementById('dashFilterUnit').value = '';
+  populateDashWorkplaceSelect();
+  document.getElementById('dashFilterWorkplace').value = '';
+  const t = todayStr();
+  document.getElementById('dashFilterFrom').value = t;
+  document.getElementById('dashFilterTo').value = t;
+  renderDashboard();
+}
+
+function resetLogFilters() {
+  document.getElementById('logFilterUnit').value = '';
+  populateLogWorkplaceSelect();
+  document.getElementById('logFilterWorkplace').value = '';
+  populateLogEmployeeSelect();
+  document.getElementById('logFilterEmployee').value = '';
+  const t = todayStr();
+  document.getElementById('logFilterFrom').value = t;
+  document.getElementById('logFilterTo').value = t;
+  renderTeamLog();
+}
+
+/* ============================================================
+   ADMIN: TAB SWITCHING
+   ============================================================ */
+function switchAdminTab(tab) {
+  currentAdminTab = tab;
+  document.getElementById('tabBtnDashboard').classList.toggle('active', tab === 'dashboard');
+  document.getElementById('tabBtnTeamLog').classList.toggle('active', tab === 'teamlog');
+  document.getElementById('tabDashboard').classList.toggle('active', tab === 'dashboard');
+  document.getElementById('tabTeamLog').classList.toggle('active', tab === 'teamlog');
+}
+
+/* ============================================================
+   ADMIN: DASHBOARD
+   ============================================================ */
+function filterUsersByDashFilters() {
+  const unit = document.getElementById('dashFilterUnit').value;
+  const wp   = document.getElementById('dashFilterWorkplace').value;
+
+  return allUsersCache.filter(u => {
+    if (u.role === 'admin') return false;
+    if (unit && u.unit !== unit) return false;
+    if (wp && u.workplace !== wp) return false;
+    return true;
+  });
+}
+
+function filterEntriesByDate(entries, fromStr, toStr) {
+  const { start, end } = dateRangeFromInputs(fromStr, toStr);
+  return entries.filter(e => {
+    const t = toTimestamp(e);
+    if (t === null) return false;
+    if (start && t < start.toDate().getTime()) return false;
+    if (end && t > end.toDate().getTime()) return false;
+    return true;
+  });
+}
+
+function renderDashboard() {
+  const cards = document.getElementById('dashCards');
+  const users = filterUsersByDashFilters();
+  const fromStr = document.getElementById('dashFilterFrom').value;
+  const toStr   = document.getElementById('dashFilterTo').value;
+
+  if (users.length === 0) {
+    cards.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <i class="fas fa-users"></i>
+      <h3>No employees match the filters</h3>
+      <p>Try adjusting the Unit, Workplace or date range.</p>
+    </div>`;
+    return;
+  }
+
+  // Destroy old charts
+  Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch(e) {} });
+  Object.keys(chartInstances).forEach(k => delete chartInstances[k]);
+
+  cards.innerHTML = '';
+
+  users.forEach(user => {
+    const docId = user.emailDocId || user.docId;
+
+    // This user's entries in range
+    const userEntries = filterEntriesByDate(
+      adminEntriesCache.filter(e => e.emailDocId === docId),
+      fromStr, toStr
+    );
+
+    // Team entries: same unit + workplace, in range
+    const teamEntries = filterEntriesByDate(
+      adminEntriesCache.filter(e =>
+        e.unit === user.unit && e.workplace === user.workplace
+      ),
+      fromStr, toStr
+    );
+
+    // Score per job type
+    const userByType = {};
+    const teamByType = {};
+    Object.keys(JOB_SCHEMAS).forEach(t => { userByType[t] = 0; teamByType[t] = 0; });
+
+    userEntries.forEach(e => { if (userByType[e.type] !== undefined) userByType[e.type] += (e.score || 0); });
+    teamEntries.forEach(e => { if (teamByType[e.type] !== undefined) teamByType[e.type] += (e.score || 0); });
+
+    const cardId = 'card-' + docId.replace(/[^a-zA-Z0-9]/g, '_');
+    const initials = (user.fullName || user.email || '?').trim().charAt(0).toUpperCase();
+
+    const card = document.createElement('div');
+    card.className = 'emp-card';
+    card.innerHTML = `
+      <div class="emp-card-head">
+        <div class="emp-avatar">${escapeHtml(initials)}</div>
+        <div class="emp-info">
+          <h3>${escapeHtml(user.fullName || user.email || 'Unknown')}</h3>
+          <div class="meta">
+            <span><i class="fas fa-briefcase"></i> ${escapeHtml(user.designation || '-')}</span>
+            <span><i class="fas fa-building"></i> ${escapeHtml(user.unit || '-')}</span>
+            <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(user.workplace || '-')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="${cardId}"></canvas></div>
+      <div class="emp-card-actions">
+        <button class="btn btn-outline btn-sm" onclick="openDetailLog('${docId}')">
+          <i class="fas fa-clipboard-list"></i> Detail Log
+        </button>
+      </div>
+    `;
+    cards.appendChild(card);
+
+    // Build the chart after element is in DOM
+    const labels = Object.keys(JOB_SCHEMAS).map(t => JOB_SCHEMAS[t].label);
+    const userData = Object.keys(JOB_SCHEMAS).map(t => +userByType[t].toFixed(2));
+    const teamData = Object.keys(JOB_SCHEMAS).map(t => +teamByType[t].toFixed(2));
+
+    const ctx = document.getElementById(cardId);
+    chartInstances[cardId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'User Score',
+            data: userData,
+            backgroundColor: 'rgba(33,150,243,0.85)',
+            borderColor: 'rgba(33,150,243,1)',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Team Total (same workplace)',
+            data: teamData,
+            backgroundColor: 'rgba(200,200,200,0.5)',
+            borderColor: 'rgba(150,150,150,0.9)',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.x}` } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { font: { size: 10 } } },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  });
+}
+
+/* ============================================================
+   ADMIN: DETAIL LOG (per employee)
+   ============================================================ */
+function openDetailLog(docId) {
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+  detailLogUser = user;
+
+  document.getElementById('detailLogTitle').textContent = `Detail Log — ${user.fullName || user.email}`;
+
+  // Populate Job filter
+  const jobSel = document.getElementById('detailFilterJob');
+  jobSel.innerHTML = `<option value="">All Jobs</option>` +
+    Object.keys(JOB_SCHEMAS).map(t => `<option value="${t}">${escapeHtml(JOB_SCHEMAS[t].label)}</option>`).join('');
+
+  // Default: no date filters, show last 100
+  document.getElementById('detailFilterFrom').value = '';
+  document.getElementById('detailFilterTo').value = '';
+
+  // Preload entries
+  detailLogEntries = adminEntriesCache
+    .filter(e => e.emailDocId === docId)
+    .sort((a, b) => toTimestamp(b) - toTimestamp(a))
+    .slice(0, 100);
+
+  renderDetailLog();
+  openModal('detailLogModal');
+}
+
+function resetDetailFilters() {
+  document.getElementById('detailFilterJob').value = '';
+  document.getElementById('detailFilterFrom').value = '';
+  document.getElementById('detailFilterTo').value = '';
+  renderDetailLog();
+}
+
+function renderDetailLog() {
+  if (!detailLogUser) return;
+
+  const jobFilter = document.getElementById('detailFilterJob').value;
+  const fromStr   = document.getElementById('detailFilterFrom').value;
+  const toStr     = document.getElementById('detailFilterTo').value;
+
+  const docId = detailLogUser.emailDocId || detailLogUser.docId;
+
+  let rows = adminEntriesCache
+    .filter(e => e.emailDocId === docId)
+    .sort((a, b) => toTimestamp(b) - toTimestamp(a));
+
+  if (jobFilter) rows = rows.filter(e => e.type === jobFilter);
+
+  if (fromStr || toStr) {
+    const { start, end } = dateRangeFromInputs(fromStr, toStr);
+    rows = rows.filter(e => {
+      const t = toTimestamp(e);
+      if (t === null) return false;
+      if (start && t < start.toDate().getTime()) return false;
+      if (end && t > end.toDate().getTime()) return false;
+      return true;
+    });
+  } else {
+    rows = rows.slice(0, 100);
+  }
+
+  const body = document.getElementById('detailLogBody');
+
+  if (rows.length === 0) {
+    body.innerHTML = `<div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>No entries</h3>
+      <p>No entries match the current filters.</p>
+    </div>`;
+    return;
+  }
+
+  let html = '<table><thead><tr>' +
+    '<th>Date / Time</th><th>Job Type</th><th>Details</th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach(e => {
+    const schema = JOB_SCHEMAS[e.type] || { label: e.type, icon: 'fa-circle' };
+    const detail = summarizePayload(e.type, e.payload);
+    html += `<tr>
+      <td>${fmtTime(e.occurredAt)}</td>
+      <td><span class="type-badge"><i class="fas ${schema.icon}"></i> ${escapeHtml(schema.label)}</span></td>
+      <td>${escapeHtml(detail)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+/* ============================================================
+   ADMIN: TEAM LOG
+   ============================================================ */
+function renderTeamLog() {
+  const unit = document.getElementById('logFilterUnit').value;
+  const wp   = document.getElementById('logFilterWorkplace').value;
+  const emp  = document.getElementById('logFilterEmployee').value;
+  const fromStr = document.getElementById('logFilterFrom').value;
+  const toStr   = document.getElementById('logFilterTo').value;
+
+  let rows = adminEntriesCache.slice();
+
+  if (unit) rows = rows.filter(e => e.unit === unit);
+  if (wp)   rows = rows.filter(e => e.workplace === wp);
+  if (emp)  rows = rows.filter(e => e.emailDocId === emp);
+
+  if (fromStr || toStr) {
+    const { start, end } = dateRangeFromInputs(fromStr, toStr);
+    rows = rows.filter(e => {
+      const t = toTimestamp(e);
+      if (t === null) return false;
+      if (start && t < start.toDate().getTime()) return false;
+      if (end && t > end.toDate().getTime()) return false;
+      return true;
+    });
+  }
+
+  rows.sort((a, b) => toTimestamp(b) - toTimestamp(a));
+  teamLogAllRows = rows;
+  teamLogShown = Math.min(TEAM_LOG_PAGE, rows.length);
+
+  renderTeamLogRows();
+}
+
+function renderTeamLogRows() {
+  const body = document.getElementById('teamLogBody');
+  const countEl = document.getElementById('teamLogCount');
+  const moreWrap = document.getElementById('teamLogMoreWrap');
+
+  countEl.textContent = teamLogAllRows.length + ' entries';
+
+  if (teamLogAllRows.length === 0) {
+    body.innerHTML = `<div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>No entries</h3>
+      <p>No entries match the current filters.</p>
+    </div>`;
+    moreWrap.style.display = 'none';
+    return;
+  }
+
+  const slice = teamLogAllRows.slice(0, teamLogShown);
+
+  let html = '<table><thead><tr>' +
+    '<th>Date / Time</th><th>Employee</th><th>Unit</th><th>Workplace</th>' +
+    '<th>Job Type</th><th>Details</th>' +
+    '</tr></thead><tbody>';
+
+  slice.forEach(e => {
+    const schema = JOB_SCHEMAS[e.type] || { label: e.type, icon: 'fa-circle' };
+    const detail = summarizePayload(e.type, e.payload);
+    html += `<tr>
+      <td>${fmtTime(e.occurredAt)}</td>
+      <td>${escapeHtml(e.fullName || e.uid || '-')}</td>
+      <td>${escapeHtml(e.unit || '-')}</td>
+      <td>${escapeHtml(e.workplace || '-')}</td>
+      <td><span class="type-badge"><i class="fas ${schema.icon}"></i> ${escapeHtml(schema.label)}</span></td>
+      <td>${escapeHtml(detail)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+
+  if (teamLogShown < teamLogAllRows.length) {
+    moreWrap.style.display = 'block';
+    document.getElementById('teamLogMoreBtn').innerHTML =
+      `<i class="fas fa-chevron-down"></i> Load more (${teamLogAllRows.length - teamLogShown} remaining)`;
+  } else {
+    moreWrap.style.display = 'none';
+  }
+}
+
+function teamLogLoadMore() {
+  teamLogShown = Math.min(teamLogShown + TEAM_LOG_PAGE, teamLogAllRows.length);
+  renderTeamLogRows();
 }
 
 /* ============================================================
@@ -1450,6 +2198,7 @@ document.addEventListener('keydown', (e) => {
     closeModal('settingsModal');
     closeModal('editModal');
     closeModal('deleteEntryModal');
+    closeModal('detailLogModal');
   }
   if (e.key === 'Enter' && document.getElementById('loginContainer').style.display !== 'none') {
     if (!document.getElementById('loginForm').classList.contains('hidden')) handleLogin();
