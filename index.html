@@ -464,6 +464,35 @@ body {
 .emp-info .meta span { display: inline-flex; align-items: center; gap: 4px; }
 .emp-info .meta i { color: #4fc3f7; font-size: 10px; }
 
+/* --- Cumulative score badge on employee card (top-right corner) --- */
+.emp-cum-score {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  margin-left: 8px;
+  padding-left: 10px;
+}
+.emp-cum-score .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.emp-cum-score .value {
+  font-size: 18pt;
+  font-weight: 800;
+  color: #1976d2;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .chart-wrap {
   position: relative; height: 240px; margin-bottom: 14px;
 }
@@ -2160,7 +2189,6 @@ function updateBadges() {
    — Team Score = cumulative sum of ALL scores of ALL employees
      in the same unit + workplace (including me).
    — My Score   = cumulative sum of ALL my scores.
-   — Data: client-side sums via live Firestore snapshot listeners.
    ============================================================ */
 async function attachCumulativeListeners() {
   if (unsubMyCumulative)   { unsubMyCumulative();   unsubMyCumulative   = null; }
@@ -2208,15 +2236,13 @@ async function attachCumulativeListeners() {
   }
 
   /* 3. Live-listen to all-time entries of team-mates.
-        Firestore `in` supports max 10 IDs → batch them.
-        Merge all batches into a single running total. */
+        Firestore `in` supports max 10 IDs → batch them. */
   const teamIds = Array.from(teamDocIdsCache);
   const batches = [];
   for (let i = 0; i < teamIds.length; i += 10) {
     batches.push(teamIds.slice(i, i + 10));
   }
 
-  /* Per-batch subtotal so each snapshot replaces only its own contribution */
   const batchSubtotals = {};
 
   const batchUnsubs = batches.map((ids, idx) => {
@@ -2230,7 +2256,6 @@ async function attachCumulativeListeners() {
         });
         batchSubtotals[idx] = sum;
 
-        /* Sum all batches */
         let total = 0;
         Object.values(batchSubtotals).forEach(v => { total += v; });
         teamCumulativeOthersTotal = total;
@@ -2245,7 +2270,7 @@ async function attachCumulativeListeners() {
 
 function updateScoreCompareBar() {
   const myTotal    = myCumulativeTotal || 0;
-  const teamTotal  = myTotal + (teamCumulativeOthersTotal || 0); // includes me
+  const teamTotal  = myTotal + (teamCumulativeOthersTotal || 0);
 
   const myRounded   = Math.round(myTotal * 100) / 100;
   const teamRounded = Math.round(teamTotal * 100) / 100;
@@ -3004,6 +3029,7 @@ function renderWorkplacePies() {
 
 /* ============================================================
    ADMIN: EMPLOYEE BAR CARDS
+   — Includes cumulative (all-time) score badge at top-right.
    ============================================================ */
 function renderEmployeeCards() {
   const cards   = document.getElementById('dashCards');
@@ -3028,10 +3054,13 @@ function renderEmployeeCards() {
   users.forEach(user => {
     const docId = user.emailDocId || user.docId;
 
-    const userEntries = filterEntriesByDate(
-      adminEntriesCache.filter(e => e.emailDocId === docId),
-      fromStr, toStr
-    );
+    /* --- Cumulative (all-time) score for this employee --- */
+    const allTimeEntries = adminEntriesCache.filter(e => e.emailDocId === docId);
+    const cumulativeScore = allTimeEntries.reduce((s, e) => s + (e.score || 0), 0);
+    const cumulativeRounded = Math.round(cumulativeScore * 100) / 100;
+
+    /* --- Date-filtered entries for the chart --- */
+    const userEntries = filterEntriesByDate(allTimeEntries, fromStr, toStr);
 
     const teamDocIds = new Set(
       allUsersCache
@@ -3067,6 +3096,10 @@ function renderEmployeeCards() {
             <span><i class="fas fa-building"></i> ${escapeHtml(user.unit || '-')}</span>
             <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(user.workplace || '-')}</span>
           </div>
+        </div>
+        <div class="emp-cum-score" title="Cumulative score (all entries)">
+          <span class="label">Score :</span>
+          <span class="value">${cumulativeRounded}</span>
         </div>
       </div>
       <div class="chart-wrap"><canvas id="${cardId}"></canvas></div>
@@ -3576,7 +3609,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — cumulative score compare bar (all-time).');
+console.log('✅ ICD Work Log — employee cumulative score badge added to admin dashboard cards.');
 </script>
 </body>
 </html>
