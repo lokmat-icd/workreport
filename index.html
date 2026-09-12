@@ -158,9 +158,113 @@ body {
 
 /* ============ MAIN APP ============ */
 .app-main { max-width: 1200px; margin: 0 auto; padding: 20px 24px 60px 24px; }
-.page-title { margin-bottom: 16px; }
-.page-title h2 { font-size: 20px; font-weight: 700; }
-.page-title p { color: #888; font-size: 13px; }
+
+/* ---- TITLE ROW with score bar on the right ---- */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.title-row .page-title {
+  flex: 1;
+  min-width: 260px;
+  margin-bottom: 0;
+}
+.title-row .page-title h2 { font-size: 20px; font-weight: 700; }
+.title-row .page-title p { color: #888; font-size: 13px; }
+
+/* ---- SCORE COMPARISON BAR ---- */
+.score-compare-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.04);
+  min-width: 420px;
+  max-width: 520px;
+  flex: 0 0 auto;
+}
+.score-compare-card .sc-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.score-compare-card .sc-title i { color: #4fc3f7; }
+
+.score-compare-card .sc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-compare-card .sc-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.score-compare-card .sc-label.mine {
+  color: #1976d2;
+}
+.score-compare-card .sc-label.team {
+  color: #666;
+}
+.score-compare-card .sc-label .sc-num {
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.score-compare-card .sc-label.mine .sc-num {
+  color: #1976d2;
+}
+.score-compare-card .sc-label.team .sc-num {
+  color: #555;
+}
+
+.score-compare-card .sc-bar-wrap {
+  flex: 1;
+  position: relative;
+  height: 22px;
+  min-width: 140px;
+}
+.score-compare-card .sc-bar {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.score-compare-card .sc-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4fc3f7, #2196f3);
+  transition: width 0.4s ease;
+  border-radius: 6px 0 0 6px;
+}
+.score-compare-card .sc-pct {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-shadow: 0 0 4px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,1);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 
 /* ============ TABS ============ */
 .tab-bar {
@@ -218,22 +322,14 @@ body {
 .filter-bar .btn-reset:hover { background: #f8f9fc; border-color: #ccc; }
 
 /* ============ WORKPLACE PIE CHARTS ROW ============ */
-.wp-pies-section {
-  margin-bottom: 22px;
-}
+.wp-pies-section { margin-bottom: 22px; }
 .wp-pies-section .section-heading {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; padding-left: 2px;
 }
-.wp-pies-section .section-heading i {
-  color: #4fc3f7; font-size: 16px;
-}
-.wp-pies-section .section-heading h3 {
-  font-size: 16px; font-weight: 700; color: #1a1a2e;
-}
-.wp-pies-section .section-heading small {
-  color: #888; font-size: 12px; font-weight: 500;
-}
+.wp-pies-section .section-heading i { color: #4fc3f7; font-size: 16px; }
+.wp-pies-section .section-heading h3 { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+.wp-pies-section .section-heading small { color: #888; font-size: 12px; font-weight: 500; }
 
 .wp-pies-grid {
   display: grid;
@@ -293,9 +389,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.wp-pie-wrap {
-  position: relative; height: 220px; margin-bottom: 8px;
-}
+.wp-pie-wrap { position: relative; height: 220px; margin-bottom: 8px; }
 
 .wp-pie-empty {
   display: flex; flex-direction: column; align-items: center;
@@ -407,7 +501,6 @@ table th {
 table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; color: #333; }
 table tr:hover td { background: #f8f9fc; }
 
-/* Widen the Date/Time column of the Team Log table */
 #teamLogBody table th:first-child,
 #teamLogBody table td:first-child {
   min-width: 180px;
@@ -664,6 +757,9 @@ table tr:hover td { background: #f8f9fc; }
 }
 
 /* ============ RESPONSIVE ============ */
+@media (max-width: 900px) {
+  .score-compare-card { min-width: 100%; max-width: 100%; }
+}
 @media (max-width: 780px) {
   .app-header .container { flex-direction: column; text-align: center; }
   .app-header .title-block { order: -1; width: 100%; }
@@ -671,7 +767,6 @@ table tr:hover td { background: #f8f9fc; }
   .app-header .title-block h1 { font-size: 18px; }
   .cards-grid { grid-template-columns: 1fr; }
   .wp-pies-grid { grid-template-columns: 1fr; }
-  /* Not used on mobile, but keep a safe fallback */
   .job-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
@@ -774,9 +869,31 @@ table tr:hover td { background: #f8f9fc; }
 
     <!-- ============ EMPLOYEE VIEW ============ -->
     <div id="employeeView" style="display:none;">
-      <div class="page-title">
-        <h2>Record your daily workload</h2>
-        <p>Click any job type to expand and record your work</p>
+      <div class="title-row">
+        <div class="page-title">
+          <h2>Record your daily workload</h2>
+          <p>Click any job type to expand and record your work</p>
+        </div>
+
+        <div class="score-compare-card" id="scoreCompareCard">
+          <div class="sc-title">
+            <i class="fas fa-chart-simple"></i> My Cumulative Score vs Team
+          </div>
+          <div class="sc-row">
+            <span class="sc-label mine">
+              My Score (<span class="sc-num" id="scMyScore">0</span>)
+            </span>
+            <div class="sc-bar-wrap">
+              <div class="sc-bar">
+                <div class="sc-bar-fill" id="scBarFill" style="width:0%;"></div>
+              </div>
+              <div class="sc-pct" id="scPct">0%</div>
+            </div>
+            <span class="sc-label team">
+              Team Score (<span class="sc-num" id="scTeamScore">0</span>)
+            </span>
+          </div>
+        </div>
       </div>
 
       <div id="jobSections"></div>
@@ -812,7 +929,6 @@ table tr:hover td { background: #f8f9fc; }
 
       <!-- ---- TAB: DASHBOARD ---- -->
       <div id="tabDashboard" class="tab-pane active">
-        <!-- ---- WORKPLACE COMPARISON PIE CHARTS ---- -->
         <div class="wp-pies-section" id="wpPiesSection">
           <div class="section-heading">
             <i class="fas fa-chart-pie"></i>
@@ -875,7 +991,6 @@ table tr:hover td { background: #f8f9fc; }
           </button>
         </div>
 
-        <!-- ---- STATS CHIPS ---- -->
         <div id="teamLogStats" class="stats-chips"></div>
 
         <div class="table-container">
@@ -1170,9 +1285,6 @@ function safeId(s) {
   return String(s).replace(/[^a-zA-Z0-9]/g, '_');
 }
 
-/* Split workplace by first dash (–, —, -), trim, case-insensitive lookup,
-   returns canonical display label using first-seen casing.
-   e.g., "Kolhapur-MIDC" and "kolhapur-City" → "Kolhapur" (canonical) */
 function workplaceGroupKey(wp) {
   if (!wp) return '';
   const str = String(wp).trim();
@@ -1347,6 +1459,14 @@ let recentEntries = [];
 let unsubToday  = null;
 let unsubRecent = null;
 let unsubSettings = null;
+let unsubTeamCumulative = null;
+let unsubMyCumulative = null;
+
+/* Cumulative caches for the score compare bar */
+let myCumulativeTotal = 0;
+let teamCumulativeOthersTotal = 0;
+let teamDocIdsCache = new Set();
+
 let editingEntry  = null;
 let deletingEntry = null;
 
@@ -1362,7 +1482,6 @@ let detailLogUser = null;
 const chartInstances = {};
 const wpPieInstances = {};
 
-/* Flag to prevent infinite loops when syncing sibling <details> */
 let syncingDetails = false;
 
 /* ============================================================
@@ -1680,10 +1799,7 @@ function renderAccordion() {
 
   container.innerHTML = html;
 
-  // Attach paired open/close handlers
   attachAccordionSync();
-
-  // Attach PDF grid listeners
   attachPdfGridListeners('pdf', 'new');
 }
 
@@ -1728,8 +1844,6 @@ function renderJobSection(type) {
   `;
 }
 
-/* Pair the open/close state of <details> within the same .job-row.
-   B1 behavior: clicking one opens both; closing one closes both. */
 function attachAccordionSync() {
   document.querySelectorAll('#jobSections .job-row').forEach(row => {
     const details = row.querySelectorAll('details.job-section');
@@ -1749,7 +1863,6 @@ function attachAccordionSync() {
   });
 }
 
-/* ---------- Normal field renderer ---------- */
 function renderField(f, type, mode, value) {
   const id   = `${mode}-${type}-${f.key}`;
   const req  = f.required ? '<span class="required">*</span>' : '';
@@ -1784,7 +1897,6 @@ function renderField(f, type, mode, value) {
     <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
 }
 
-/* ---------- PDF edition grid renderer ---------- */
 function renderEditionGrid(f, type, mode, savedEditions) {
   const prefix = `${mode}-${type}-${f.key}`;
   const savedHello = (savedEditions && savedEditions.hello) || {};
@@ -1883,8 +1995,6 @@ function readPdfGridPayload(prefix) {
 
 /* ============================================================
    EMPLOYEE: SUBMIT ENTRY
-   — Date & Time is now auto-captured from the system clock
-     when the entry is saved. No date input is shown in the UI.
    ============================================================ */
 async function submitEntry(type) {
   if (!currentDocId || !currentUser) return;
@@ -1932,7 +2042,6 @@ async function submitEntry(type) {
   }
   const score = Math.round(rawScore * 100) / 100;
 
-  /* Auto-capture current date & time in the background */
   const occurredDate = new Date();
 
   const sharedBase = {
@@ -2001,6 +2110,7 @@ function attachListeners() {
   const end   = firebase.firestore.Timestamp.fromDate(new Date(new Date().setHours(24,0,0,0)));
   const userRef = db.collection('users').doc(currentDocId);
 
+  /* Today badges (unchanged) */
   unsubToday = userRef.collection('entries')
     .where('occurredAt', '>=', start)
     .where('occurredAt', '<', end)
@@ -2009,6 +2119,7 @@ function attachListeners() {
       updateBadges();
     }, err => console.error('today snapshot:', err));
 
+  /* Recent entries (unchanged) */
   unsubRecent = userRef.collection('entries')
     .orderBy('createdAt', 'desc')
     .limit(20)
@@ -2016,13 +2127,23 @@ function attachListeners() {
       recentEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderRecent();
     }, err => console.error('recent snapshot:', err));
+
+  /* Cumulative comparison bar (all-time) */
+  attachCumulativeListeners();
 }
 
 function detachListeners() {
   if (unsubToday)  { unsubToday();  unsubToday  = null; }
   if (unsubRecent) { unsubRecent(); unsubRecent = null; }
+  if (unsubMyCumulative)   { unsubMyCumulative();   unsubMyCumulative   = null; }
+  if (unsubTeamCumulative) { unsubTeamCumulative(); unsubTeamCumulative = null; }
+
   todayEntries  = [];
   recentEntries = [];
+
+  myCumulativeTotal = 0;
+  teamCumulativeOthersTotal = 0;
+  teamDocIdsCache = new Set();
 }
 
 function updateBadges() {
@@ -2032,6 +2153,115 @@ function updateBadges() {
     const badge = document.getElementById(`badge-${type}`);
     if (badge) badge.textContent = (counts[type] || 0) + ' today';
   }
+}
+
+/* ============================================================
+   EMPLOYEE: CUMULATIVE SCORE COMPARE BAR
+   — Team Score = cumulative sum of ALL scores of ALL employees
+     in the same unit + workplace (including me).
+   — My Score   = cumulative sum of ALL my scores.
+   — Data: client-side sums via live Firestore snapshot listeners.
+   ============================================================ */
+async function attachCumulativeListeners() {
+  if (unsubMyCumulative)   { unsubMyCumulative();   unsubMyCumulative   = null; }
+  if (unsubTeamCumulative) { unsubTeamCumulative(); unsubTeamCumulative = null; }
+
+  /* 1. My cumulative total (live) */
+  unsubMyCumulative = db.collection('users').doc(currentDocId)
+    .collection('entries')
+    .onSnapshot(snap => {
+      let sum = 0;
+      snap.forEach(d => {
+        const s = d.data().score;
+        if (typeof s === 'number' && !isNaN(s)) sum += s;
+      });
+      myCumulativeTotal = sum;
+      updateScoreCompareBar();
+    }, err => console.error('my cumulative snapshot:', err));
+
+  /* 2. Find all team-mates (same unit + workplace, excluding me & admins) */
+  try {
+    const usersSnap = await db.collection('users').get();
+    const myUnit = (currentUser && currentUser.unit) || '';
+    const myWp   = (currentUser && currentUser.workplace) || '';
+
+    teamDocIdsCache = new Set();
+    usersSnap.forEach(d => {
+      const u = d.data();
+      if (!u) return;
+      if (u.role === 'admin') return;
+      const docId = u.emailDocId || d.id;
+      if (docId === currentDocId) return;
+      if (u.unit !== myUnit) return;
+      if (u.workplace !== myWp) return;
+      teamDocIdsCache.add(docId);
+    });
+  } catch (e) {
+    console.error('team users lookup failed:', e);
+    teamDocIdsCache = new Set();
+  }
+
+  if (teamDocIdsCache.size === 0) {
+    teamCumulativeOthersTotal = 0;
+    updateScoreCompareBar();
+    return;
+  }
+
+  /* 3. Live-listen to all-time entries of team-mates.
+        Firestore `in` supports max 10 IDs → batch them.
+        Merge all batches into a single running total. */
+  const teamIds = Array.from(teamDocIdsCache);
+  const batches = [];
+  for (let i = 0; i < teamIds.length; i += 10) {
+    batches.push(teamIds.slice(i, i + 10));
+  }
+
+  /* Per-batch subtotal so each snapshot replaces only its own contribution */
+  const batchSubtotals = {};
+
+  const batchUnsubs = batches.map((ids, idx) => {
+    return db.collection('entries')
+      .where('emailDocId', 'in', ids)
+      .onSnapshot(snap => {
+        let sum = 0;
+        snap.forEach(d => {
+          const s = d.data().score;
+          if (typeof s === 'number' && !isNaN(s)) sum += s;
+        });
+        batchSubtotals[idx] = sum;
+
+        /* Sum all batches */
+        let total = 0;
+        Object.values(batchSubtotals).forEach(v => { total += v; });
+        teamCumulativeOthersTotal = total;
+        updateScoreCompareBar();
+      }, err => console.error('team cumulative snapshot:', err));
+  });
+
+  unsubTeamCumulative = () => {
+    batchUnsubs.forEach(u => { try { u(); } catch(e) {} });
+  };
+}
+
+function updateScoreCompareBar() {
+  const myTotal    = myCumulativeTotal || 0;
+  const teamTotal  = myTotal + (teamCumulativeOthersTotal || 0); // includes me
+
+  const myRounded   = Math.round(myTotal * 100) / 100;
+  const teamRounded = Math.round(teamTotal * 100) / 100;
+
+  const pct = teamTotal > 0 ? (myTotal / teamTotal) * 100 : 0;
+  const pctDisplay = pct > 0 && pct < 1 ? pct.toFixed(1) : Math.round(pct);
+
+  const myEl   = document.getElementById('scMyScore');
+  const tmEl   = document.getElementById('scTeamScore');
+  const fillEl = document.getElementById('scBarFill');
+  const pctEl  = document.getElementById('scPct');
+
+  if (myEl)   myEl.textContent   = myRounded;
+  if (tmEl)   tmEl.textContent   = teamRounded;
+  if (fillEl) fillEl.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  if (pctEl)  pctEl.textContent  = pctDisplay + '%';
 }
 
 function renderRecent() {
@@ -2080,7 +2310,6 @@ function renderRecent() {
   body.innerHTML = html;
 }
 
-/* ---------- Summary text ---------- */
 function summarizePayload(type, p) {
   if (!p) return '-';
   switch (type) {
@@ -2127,7 +2356,6 @@ function stripPrefix(name, prefix) {
 
 /* ============================================================
    EMPLOYEE: EDIT / DELETE ENTRY
-   — Date & Time is locked (shown disabled for reference only).
    ============================================================ */
 function openEditEntry(entryId) {
   const entry = recentEntries.find(e => e.id === entryId);
@@ -2420,7 +2648,6 @@ async function confirmAdminDeleteEntry() {
   }
 }
 
-/* ---------- ROUTERS ---------- */
 function routeSaveEntry() {
   const isAdmin = currentUser && currentUser.role === 'admin';
   const entryOwnerDocId = editingEntry && (editingEntry.emailDocId || editingEntry.uid);
@@ -3349,7 +3576,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — two-column job forms, background date/time capture.');
+console.log('✅ ICD Work Log — cumulative score compare bar (all-time).');
 </script>
 </body>
 </html>
