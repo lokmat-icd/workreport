@@ -1632,6 +1632,32 @@ function renderAccordion() {
   let html = '';
   for (const type of Object.keys(JOB_SCHEMAS)) {
     const schema = JOB_SCHEMAS[type];
+    const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+    // Build the form body. For PDF (editionGrid), we render the grid then
+    // append a single Date & Time field. For all other types, the fields
+    // and the Date & Time field are placed together in one .form-row grid.
+    let bodyHtml = '';
+    if (hasEditionGrid) {
+      bodyHtml = schema.fields.map(f => renderEditionGrid(f, type, 'new', null)).join('');
+      bodyHtml += `
+        <div class="form-row" style="margin-top:16px;">
+          <div class="form-group">
+            <label>Date &amp; Time <span class="required">*</span></label>
+            <input type="datetime-local" id="field-${type}-occurredAt" required>
+          </div>
+        </div>`;
+    } else {
+      bodyHtml = `
+        <div class="form-row">
+          ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
+          <div class="form-group">
+            <label>Date &amp; Time <span class="required">*</span></label>
+            <input type="datetime-local" id="field-${type}-occurredAt" required>
+          </div>
+        </div>`;
+    }
+
     html += `
       <details class="job-section" data-type="${type}" id="section-${type}">
         <summary>
@@ -1644,17 +1670,7 @@ function renderAccordion() {
         </summary>
         <div class="job-body">
           <form class="job-form" onsubmit="event.preventDefault(); submitEntry('${type}');">
-            ${
-              schema.fields.some(f => f.type === 'editionGrid')
-                ? schema.fields.map(f => renderEditionGrid(f, type, 'new', null)).join('')
-                : `<div class="form-row">
-                     ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
-                     <div class="form-group">
-                       <label>Date &amp; Time <span class="required">*</span></label>
-                       <input type="datetime-local" id="field-${type}-occurredAt" required>
-                     </div>
-                   </div>`
-            }
+            ${bodyHtml}
             <div class="form-actions">
               <button type="submit" class="btn btn-success">
                 <i class="fas fa-save"></i> Save Entry
@@ -1670,12 +1686,11 @@ function renderAccordion() {
   }
   container.innerHTML = html;
 
+  // Seed all Date & Time fields with "now"
   for (const type of Object.keys(JOB_SCHEMAS)) {
     const el = document.getElementById(`field-${type}-occurredAt`);
     if (el) el.value = localNow();
   }
-  const pdfOcc = document.getElementById('field-pdf-occurredAt');
-  if (pdfOcc) pdfOcc.value = localNow();
 
   attachPdfGridListeners('pdf', 'new');
 }
@@ -1715,7 +1730,9 @@ function renderField(f, type, mode, value) {
     <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
 }
 
-/* ---------- PDF edition grid renderer ---------- */
+/* ---------- PDF edition grid renderer ----------
+   NOTE: This renderer intentionally does NOT include a Date & Time field.
+   The caller is responsible for adding exactly one date field. */
 function renderEditionGrid(f, type, mode, savedEditions) {
   const prefix = `${mode}-${type}-${f.key}`;
   const savedHello = (savedEditions && savedEditions.hello) || {};
@@ -1756,12 +1773,6 @@ function renderEditionGrid(f, type, mode, savedEditions) {
         <h4><i class="fas fa-book-open"></i> Main Edition</h4>
         ${mainRows}
         <div class="edition-total">Main Total: <strong id="${prefix}-main-total">0</strong> pages</div>
-      </div>
-    </div>
-    <div class="form-row" style="margin-top:16px;">
-      <div class="form-group">
-        <label>Date &amp; Time <span class="required">*</span></label>
-        <input type="datetime-local" id="field-${type}-occurredAt" required>
       </div>
     </div>
   `;
@@ -2088,6 +2099,8 @@ function openEditEntry(entryId) {
     html += `</div>`;
   }
 
+  // Always append exactly ONE disabled Date & Time field (locked) — for both
+  // editionGrid and non-editionGrid types. This makes the edit modal uniform.
   const occStr = toLocalInputValue(entry.occurredAt);
   html += `<div class="form-group" style="margin-top:14px;">
              <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
@@ -2098,8 +2111,6 @@ function openEditEntry(entryId) {
   openModal('editModal');
 
   if (hasEditionGrid) {
-    const el = document.getElementById('field-' + entry.type + '-occurredAt');
-    if (el) el.id = 'edit-' + entry.type + '-occurredAt-readonly';
     attachPdfGridListeners(entry.type, 'edit');
   }
 }
@@ -2225,6 +2236,7 @@ function openAdminEditEntry(entryId) {
     html += `</div>`;
   }
 
+  // Always append exactly ONE disabled Date & Time field (locked)
   const occStr = toLocalInputValue(entry.occurredAt);
   html += `<div class="form-group" style="margin-top:14px;">
              <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
@@ -2242,8 +2254,6 @@ function openAdminEditEntry(entryId) {
   openModal('editModal');
 
   if (hasEditionGrid) {
-    const el = document.getElementById('field-' + entry.type + '-occurredAt');
-    if (el) el.id = 'edit-' + entry.type + '-occurredAt-readonly';
     attachPdfGridListeners(entry.type, 'edit');
   }
 }
@@ -3310,7 +3320,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — Admin Team Log edit/delete (no time limit) ready.');
+console.log('✅ ICD Work Log — PDF date/time field duplication fixed.');
 </script>
 </body>
 </html>
