@@ -217,6 +217,93 @@ body {
 }
 .filter-bar .btn-reset:hover { background: #f8f9fc; border-color: #ccc; }
 
+/* ============ WORKPLACE PIE CHARTS ROW ============ */
+.wp-pies-section {
+  margin-bottom: 22px;
+}
+.wp-pies-section .section-heading {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding-left: 2px;
+}
+.wp-pies-section .section-heading i {
+  color: #4fc3f7; font-size: 16px;
+}
+.wp-pies-section .section-heading h3 {
+  font-size: 16px; font-weight: 700; color: #1a1a2e;
+}
+.wp-pies-section .section-heading small {
+  color: #888; font-size: 12px; font-weight: 500;
+}
+
+.wp-pies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.wp-pie-card {
+  background: #fff; border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.04);
+  display: flex; flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+.wp-pie-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+
+.wp-pie-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 8px; gap: 8px;
+}
+.wp-pie-head .wp-name {
+  font-size: 15px; font-weight: 700; color: #1a1a2e;
+  display: flex; align-items: center; gap: 6px;
+  min-width: 0;
+}
+.wp-pie-head .wp-name .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2196f3; flex-shrink: 0;
+}
+.wp-pie-head .wp-name-text {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wp-pie-head .wp-count {
+  background: #e8ecf1; color: #555;
+  padding: 2px 9px; border-radius: 12px;
+  font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+.wp-pie-sub {
+  font-size: 11px; color: #888; margin-bottom: 10px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  line-height: 1.4;
+}
+.wp-pie-sub .chip-mini {
+  background: #f4f6fa;
+  padding: 2px 8px; border-radius: 8px;
+  font-size: 10.5px; color: #666;
+  border: 1px solid #e8ecf1;
+}
+.wp-pie-total {
+  font-size: 12px; color: #555;
+  margin-bottom: 6px;
+}
+.wp-pie-total strong {
+  color: #1976d2; font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-pie-wrap {
+  position: relative; height: 220px; margin-bottom: 8px;
+}
+
+.wp-pie-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: 220px;
+  color: #aaa; font-size: 12px; gap: 8px;
+}
+.wp-pie-empty i { font-size: 30px; color: #ddd; }
+
 /* ============ TEAM LOG STATS CHIPS ============ */
 .stats-chips {
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -560,6 +647,7 @@ table tr:hover td { background: #f8f9fc; }
   .app-header .logo img { width: 110px; max-height: 50px; }
   .app-header .title-block h1 { font-size: 18px; }
   .cards-grid { grid-template-columns: 1fr; }
+  .wp-pies-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .app-header { padding: 12px 14px; }
@@ -720,6 +808,16 @@ table tr:hover td { background: #f8f9fc; }
           </button>
         </div>
 
+        <!-- ---- WORKPLACE COMPARISON PIE CHARTS ---- -->
+        <div class="wp-pies-section" id="wpPiesSection">
+          <div class="section-heading">
+            <i class="fas fa-chart-pie"></i>
+            <h3>Workplace Comparison</h3>
+            <small>— employee score share per workplace (grouped by prefix)</small>
+          </div>
+          <div id="wpPiesGrid" class="wp-pies-grid"></div>
+        </div>
+
         <div id="dashCards" class="cards-grid"></div>
       </div>
 
@@ -792,6 +890,47 @@ table tr:hover td { background: #f8f9fc; }
       </button>
       <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">
         <i class="fas fa-save"></i> Save Settings
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EDIT PROFILE MODAL ==================== -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
+      <button class="modal-close" onclick="closeModal('editProfileModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Email <small style="color:#888;font-weight:400;">(read-only)</small></label>
+        <input type="email" id="editProfileEmail" readonly>
+      </div>
+      <div class="form-group">
+        <label>Full Name <span class="required">*</span></label>
+        <input type="text" id="editProfileFullName" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label>Unit <span class="required">*</span></label>
+        <input type="text" id="editProfileUnit" placeholder="e.g., Kolhapur">
+      </div>
+      <div class="form-group">
+        <label>Workplace <span class="required">*</span></label>
+        <input type="text" id="editProfileWorkplace" placeholder="e.g., SATARA/MIDC/CITY">
+      </div>
+      <div class="form-group">
+        <label>Designation <span class="required">*</span></label>
+        <input type="text" id="editProfileDesignation" placeholder="e.g., Executive">
+      </div>
+      <div id="editProfileMsg" class="message"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('editProfileModal')">Cancel</button>
+      <button class="btn btn-primary" id="editProfileSaveBtn" onclick="saveEditProfile()">
+        <i class="fas fa-save"></i> Save Changes
       </button>
     </div>
   </div>
@@ -922,6 +1061,13 @@ const STATS_CHIPS = [
   { key: 'pdf',             label: 'PDF Making'  }
 ];
 
+/* Palette used for workplace pie slices (12 distinct colors) */
+const PIE_PALETTE = [
+  '#2196f3', '#43a047', '#f57c00', '#e53935',
+  '#8e24aa', '#00acc1', '#fdd835', '#6d4c41',
+  '#3949ab', '#7cb342', '#d81b60', '#00897b'
+];
+
 /* ============================================================
    SETTINGS FIELD DEFINITIONS
    ============================================================ */
@@ -986,6 +1132,22 @@ function formatDetailHtml(detail) {
 
 function safeId(s) {
   return String(s).replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+/* Split workplace by first dash (–, —, -), trim, case-insensitive lookup,
+   returns canonical display label using first-seen casing.
+   e.g., "Kolhapur-MIDC" and "kolhapur-City" → "Kolhapur" (canonical) */
+function workplaceGroupKey(wp) {
+  if (!wp) return '';
+  const str = String(wp).trim();
+  // Match ASCII hyphen, en-dash, em-dash (with optional surrounding spaces)
+  const m = str.match(/^([^\-–—]+?)\s*[\-–—]/);
+  if (m && m[1]) return m[1].trim();
+  return str;
+}
+
+function workplaceGroupKeyLC(wp) {
+  return workplaceGroupKey(wp).toLowerCase();
 }
 
 function showToast(message, type = 'info') {
@@ -1163,6 +1325,7 @@ const TEAM_LOG_PAGE = 100;
 
 let detailLogUser = null;
 const chartInstances = {};
+const wpPieInstances = {};   // separate registry for workplace pie charts
 
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
@@ -2219,6 +2382,177 @@ function filterEntriesByDate(entries, fromStr, toStr) {
 }
 
 function renderDashboard() {
+  renderWorkplacePies();
+  renderEmployeeCards();
+}
+
+/* ============================================================
+   ADMIN: WORKPLACE COMPARISON PIE CHARTS
+   ============================================================ */
+function renderWorkplacePies() {
+  const grid = document.getElementById('wpPiesGrid');
+  if (!grid) return;
+
+  // Destroy previous chart instances
+  Object.values(wpPieInstances).forEach(c => { try { c.destroy(); } catch(e) {} });
+  Object.keys(wpPieInstances).forEach(k => delete wpPieInstances[k]);
+
+  const fromStr = document.getElementById('dashFilterFrom').value;
+  const toStr   = document.getElementById('dashFilterTo').value;
+  const users   = filterUsersByDashFilters();   // respects Unit + Workplace dropdown
+
+  if (users.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <i class="fas fa-chart-pie"></i>
+      <h3>No employees match the filters</h3>
+      <p>Try adjusting the Unit, Workplace or date range.</p>
+    </div>`;
+    return;
+  }
+
+  // Group employees by workplace prefix key
+  // map: groupLC -> { displayLabel, subWorkplaces:Set, employees:[user,...] }
+  const groups = {};
+  users.forEach(u => {
+    const key = workplaceGroupKey(u.workplace);
+    const lc  = key.toLowerCase();
+    if (!groups[lc]) {
+      groups[lc] = {
+        displayLabel: key || '(No Workplace)',
+        subWorkplaces: new Set(),
+        employees: []
+      };
+    }
+    groups[lc].employees.push(u);
+    if (u.workplace) groups[lc].subWorkplaces.add(u.workplace);
+  });
+
+  // Sort groups alphabetically by display label
+  const groupKeys = Object.keys(groups).sort((a, b) =>
+    groups[a].displayLabel.localeCompare(groups[b].displayLabel)
+  );
+
+  grid.innerHTML = '';
+
+  groupKeys.forEach(lc => {
+    const group = groups[lc];
+
+    // Sum scores per employee within the date range (respects Unit/Workplace filter already)
+    const employeeScores = group.employees.map(u => {
+      const docId = u.emailDocId || u.docId;
+      const entries = filterEntriesByDate(
+        adminEntriesCache.filter(e => e.emailDocId === docId),
+        fromStr, toStr
+      );
+      const total = entries.reduce((s, e) => s + (e.score || 0), 0);
+      return {
+        docId,
+        name: u.fullName || u.email || u.docId,
+        score: Math.round(total * 100) / 100
+      };
+    });
+
+    // Sort descending so biggest slices come first (nicer pie layout)
+    employeeScores.sort((a, b) => b.score - a.score);
+
+    const grandTotal = employeeScores.reduce((s, e) => s + e.score, 0);
+    const employeesWithScore = employeeScores.filter(e => e.score > 0);
+    const cardId = 'wppie-' + lc.replace(/[^a-z0-9]/g, '_') + '-' + Math.random().toString(36).slice(2, 6);
+
+    // Sub-workplace chips (only if more than one distinct)
+    const subs = Array.from(group.subWorkplaces).sort();
+    const subChipsHtml = subs.length > 1
+      ? subs.map(s => `<span class="chip-mini">${escapeHtml(s)}</span>`).join('')
+      : '';
+
+    const card = document.createElement('div');
+    card.className = 'wp-pie-card';
+    card.innerHTML = `
+      <div class="wp-pie-head">
+        <div class="wp-name">
+          <span class="dot"></span>
+          <span class="wp-name-text">${escapeHtml(group.displayLabel)}</span>
+        </div>
+        <span class="wp-count">${employeeScores.length} emp</span>
+      </div>
+      ${subChipsHtml ? `<div class="wp-pie-sub">${subChipsHtml}</div>` : ''}
+      <div class="wp-pie-total">Total Score: <strong>${grandTotal.toFixed(2)}</strong></div>
+      <div class="wp-pie-wrap" id="wrap-${cardId}">
+        ${employeesWithScore.length === 0
+          ? `<div class="wp-pie-empty">
+               <i class="fas fa-chart-pie"></i>
+               <span>No scores in this range</span>
+             </div>`
+          : `<canvas id="${cardId}"></canvas>`}
+      </div>
+    `;
+    grid.appendChild(card);
+
+    if (employeesWithScore.length === 0) return;
+
+    const labels = employeesWithScore.map(e => e.name);
+    const data   = employeesWithScore.map(e => e.score);
+    const colors = employeesWithScore.map((_, i) => PIE_PALETTE[i % PIE_PALETTE.length]);
+    const docIds = employeesWithScore.map(e => e.docId);
+
+    const ctx = document.getElementById(cardId);
+    if (!ctx) return;
+
+    wpPieInstances[cardId] = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 4 },
+        plugins: {
+		  legend: { display: false },
+		  tooltip: {
+			backgroundColor: 'rgba(26,26,46,0.95)',
+			titleColor: '#fff',
+			bodyColor: '#e8ecf1',
+			padding: 10,
+			cornerRadius: 8,
+			displayColors: true,
+			boxWidth: 10,
+			boxHeight: 10,
+			callbacks: {
+			  title: (items) => items[0]?.label || '',
+			  label: (ctx) => {
+				const val = ctx.parsed || 0;
+				const pct = grandTotal > 0 ? (val / grandTotal) * 100 : 0;
+				return `  Score: ${val.toFixed(2)}  (${pct.toFixed(1)}%)`;
+			  }
+			}
+		  }
+		},
+        onClick: (evt, elements) => {
+          if (!elements || elements.length === 0) return;
+          const idx = elements[0].index;
+          const id  = docIds[idx];
+          if (id) openDetailLog(id);
+        },
+        onHover: (evt, elements) => {
+          evt.native.target.style.cursor = (elements && elements.length) ? 'pointer' : 'default';
+        }
+      }
+    });
+  });
+}
+
+/* ============================================================
+   ADMIN: EMPLOYEE BAR CARDS (existing)
+   ============================================================ */
+function renderEmployeeCards() {
   const cards   = document.getElementById('dashCards');
   const users   = filterUsersByDashFilters();
   const fromStr = document.getElementById('dashFilterFrom').value;
@@ -2246,7 +2580,7 @@ function renderDashboard() {
       fromStr, toStr
     );
 
-     const teamDocIds = new Set(
+    const teamDocIds = new Set(
       allUsersCache
         .filter(u => u.role !== 'admin'
                   && u.unit === user.unit
@@ -2283,7 +2617,10 @@ function renderDashboard() {
         </div>
       </div>
       <div class="chart-wrap"><canvas id="${cardId}"></canvas></div>
-      <div class="emp-card-actions">
+      <div class="emp-card-actions" style="gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="openEditProfile('${docId}')">
+          <i class="fas fa-user-edit"></i> Edit Profile
+        </button>
         <button class="btn btn-outline btn-sm" onclick="openDetailLog('${docId}')">
           <i class="fas fa-clipboard-list"></i> Detail Log
         </button>
@@ -2662,6 +2999,108 @@ async function saveSettings() {
 }
 
 /* ============================================================
+   ADMIN: EDIT PROFILE
+   ============================================================ */
+let editingProfileDocId = null;
+
+function openEditProfile(docId) {
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+
+  editingProfileDocId = docId;
+
+  document.getElementById('editProfileEmail').value       = user.email || '';
+  document.getElementById('editProfileFullName').value    = user.fullName || '';
+  document.getElementById('editProfileUnit').value        = user.unit || '';
+  document.getElementById('editProfileWorkplace').value   = user.workplace || '';
+  document.getElementById('editProfileDesignation').value = user.designation || '';
+
+  const msg = document.getElementById('editProfileMsg');
+  msg.style.display = 'none';
+  msg.className = 'message';
+
+  openModal('editProfileModal');
+}
+
+async function saveEditProfile() {
+  if (!editingProfileDocId) return;
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast('Admin access required', 'warning'); return;
+  }
+
+  const fullName    = document.getElementById('editProfileFullName').value.trim();
+  const unit        = document.getElementById('editProfileUnit').value.trim();
+  const workplace   = document.getElementById('editProfileWorkplace').value.trim();
+  const designation = document.getElementById('editProfileDesignation').value.trim();
+
+  const msg = document.getElementById('editProfileMsg');
+
+  if (!fullName || !unit || !workplace || !designation) {
+    msg.textContent = 'Please fill all required fields.';
+    msg.className = 'message error';
+    return;
+  }
+
+  const btn  = document.getElementById('editProfileSaveBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
+  btn.disabled  = true;
+
+  try {
+    // 1. Update the users document
+    await db.collection('users').doc(editingProfileDocId).set({
+      fullName,
+      unit,
+      workplace,
+      designation,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentDocId
+    }, { merge: true });
+
+    // 2. Update cached users list so UI reflects change immediately
+    const u = allUsersCache.find(x => (x.emailDocId || x.docId) === editingProfileDocId);
+    if (u) {
+      u.fullName    = fullName;
+      u.unit        = unit;
+      u.workplace   = workplace;
+      u.designation = designation;
+    }
+
+    // 3. Propagate name/unit/workplace to all past entries so Team Log
+    //    shows updated values (emailDocId is intentionally NOT touched).
+    try {
+      const entriesSnap = await db.collection('entries')
+        .where('emailDocId', '==', editingProfileDocId)
+        .get();
+      if (!entriesSnap.empty) {
+        const batch = db.batch();
+        entriesSnap.forEach(docSnap => {
+          batch.update(docSnap.ref, { fullName, unit, workplace });
+        });
+        await batch.commit();
+      }
+    } catch (propagateErr) {
+      console.warn('Could not propagate to entries:', propagateErr);
+    }
+
+    // 4. Refresh dashboard & team log with new values
+    renderDashboard();
+    renderTeamLog();
+
+    showToast('Profile updated successfully', 'success');
+    closeModal('editProfileModal');
+    editingProfileDocId = null;
+  } catch (err) {
+    console.error('saveEditProfile:', err);
+    msg.textContent = 'Save failed: ' + err.message;
+    msg.className = 'message error';
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+}
+
+/* ============================================================
    KEYBOARD SHORTCUTS
    ============================================================ */
 document.addEventListener('keydown', (e) => {
@@ -2670,6 +3109,7 @@ document.addEventListener('keydown', (e) => {
     closeModal('editModal');
     closeModal('deleteEntryModal');
     closeModal('detailLogModal');
+    closeModal('editProfileModal');
   }
   if (e.key === 'Enter' && document.getElementById('loginContainer').style.display !== 'none') {
     if (!document.getElementById('loginForm').classList.contains('hidden'))        handleLogin();
@@ -2678,7 +3118,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — Team Log stats chips ready.');
+console.log('✅ ICD Work Log — Workplace pies + Team Log stats ready.');
 </script>
 </body>
 </html>
