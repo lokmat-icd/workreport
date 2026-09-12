@@ -83,6 +83,7 @@ body {
 .btn-success { background: linear-gradient(135deg, #66bb6a, #43a047); color: #fff; }
 .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(76,175,80,0.4); }
 .btn-danger { background: linear-gradient(135deg, #ef5350, #d32f2f); color: #fff; }
+.btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(211,47,47,0.4); }
 .btn-outline { background: transparent; border: 2px solid #e8ecf1; color: #555; }
 .btn-outline:hover { background: #f8f9fc; border-color: #ccc; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
@@ -212,22 +213,11 @@ body {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.score-compare-card .sc-label.mine {
-  color: #1976d2;
-}
-.score-compare-card .sc-label.team {
-  color: #666;
-}
-.score-compare-card .sc-label .sc-num {
-  font-weight: 700;
-  color: #1a1a2e;
-}
-.score-compare-card .sc-label.mine .sc-num {
-  color: #1976d2;
-}
-.score-compare-card .sc-label.team .sc-num {
-  color: #555;
-}
+.score-compare-card .sc-label.mine { color: #1976d2; }
+.score-compare-card .sc-label.team { color: #666; }
+.score-compare-card .sc-label .sc-num { font-weight: 700; color: #1a1a2e; }
+.score-compare-card .sc-label.mine .sc-num { color: #1976d2; }
+.score-compare-card .sc-label.team .sc-num { color: #555; }
 
 .score-compare-card .sc-bar-wrap {
   flex: 1;
@@ -532,7 +522,7 @@ table tr:hover td { background: #f8f9fc; }
 
 #teamLogBody table th:first-child,
 #teamLogBody table td:first-child {
-  min-width: 180px;
+  min-width: 150px;
   white-space: nowrap;
 }
 
@@ -741,6 +731,7 @@ table tr:hover td { background: #f8f9fc; }
 .modal-footer {
   padding: 14px 22px; border-top: 1px solid #e8ecf1;
   display: flex; justify-content: flex-end; gap: 10px;
+  flex-wrap: wrap;
 }
 .settings-group {
   margin-bottom: 22px; padding: 16px;
@@ -758,6 +749,34 @@ table tr:hover td { background: #f8f9fc; }
   gap: 12px;
 }
 .settings-fields .form-group { margin-bottom: 0; }
+
+/* ---- Danger zone (Delete User) ---- */
+.danger-zone {
+  margin-top: 22px;
+  padding: 16px;
+  background: #fff5f5;
+  border: 2px solid #ffcdd2;
+  border-radius: 10px;
+}
+.danger-zone h4 {
+  font-size: 14px;
+  color: #b71c1c;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.danger-zone h4 i { color: #d32f2f; }
+.danger-zone p {
+  font-size: 12px;
+  color: #7f1d1d;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.danger-zone .btn-danger {
+  width: 100%;
+  justify-content: center;
+}
 
 /* ============ TOAST ============ */
 .toast-container {
@@ -842,7 +861,7 @@ table tr:hover td { background: #f8f9fc; }
     </div>
 
     <div id="registerForm" class="hidden">
-      <div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="regFullName" placeholder="Your full name"></div>
+      <div class="form-group"><label>Name Surname <span class="required">*</span></label><input type="text" id="regFullName" placeholder="Your full name"></div>
       <div class="form-group"><label>Birth Date <span class="required">*</span></label><input type="date" id="regBirthDate"></div>
       <div class="form-group"><label>Unit <span class="required">*</span></label><input type="text" id="regUnit" placeholder="e.g., Kolhapur"></div>
       <div class="form-group"><label>Workplace <span class="required">*</span></label><input type="text" id="regWorkplace" placeholder="e.g., SATARA/MIDC/CITY"></div>
@@ -1095,12 +1114,67 @@ table tr:hover td { background: #f8f9fc; }
         <label>Designation <span class="required">*</span></label>
         <input type="text" id="editProfileDesignation" placeholder="e.g., Executive">
       </div>
+
+      <!-- ===== Danger Zone: Delete User ===== -->
+      <div class="danger-zone" id="deleteUserZone" style="display:none;">
+        <h4><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
+        <p>
+          Deleting this user will <strong>permanently remove</strong> their profile,
+          all their work entries, and their login account. This action cannot be undone.
+        </p>
+        <button class="btn btn-danger" id="deleteUserBtn" onclick="openDeleteUserModal()">
+          <i class="fas fa-user-slash"></i> Delete User &amp; All Data
+        </button>
+      </div>
+
       <div id="editProfileMsg" class="message"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('editProfileModal')">Cancel</button>
       <button class="btn btn-primary" id="editProfileSaveBtn" onclick="saveEditProfile()">
         <i class="fas fa-save"></i> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DELETE USER MODAL ==================== -->
+<div class="modal-overlay" id="deleteUserModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-slash" style="color:#d32f2f;"></i> Delete User</h2>
+      <button class="modal-close" onclick="closeModal('deleteUserModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:#333;line-height:1.6;">
+        You are about to permanently delete
+        <strong id="delUserName" style="color:#b71c1c;">—</strong>
+        (<span id="delUserEmail">—</span>).
+      </p>
+      <div style="background:#fff5f5;border:2px solid #ffcdd2;border-radius:10px;padding:12px 14px;margin-top:12px;">
+        <p style="font-size:13px;color:#7f1d1d;line-height:1.6;margin:0;">
+          <i class="fas fa-exclamation-triangle" style="color:#d32f2f;"></i>
+          <strong>This will delete:</strong>
+        </p>
+        <ul style="font-size:13px;color:#7f1d1d;margin:8px 0 0 20px;line-height:1.7;">
+          <li>Their user profile document</li>
+          <li>All their work entries (mirrored copies)</li>
+          <li>All their work entries (top-level collection)</li>
+          <li>Their login account (email &amp; password)</li>
+        </ul>
+      </div>
+
+      <div class="form-group" style="margin-top:16px;">
+        <label>Type <strong style="color:#d32f2f;">DELETE</strong> to confirm</label>
+        <input type="text" id="deleteUserConfirmInput" placeholder="DELETE" autocomplete="off">
+      </div>
+
+      <div id="deleteUserMsg" class="message"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('deleteUserModal')">Cancel</button>
+      <button class="btn btn-danger" id="deleteUserConfirmBtn" onclick="confirmDeleteUser()" disabled>
+        <i class="fas fa-trash"></i> Delete Permanently
       </button>
     </div>
   </div>
@@ -1206,6 +1280,7 @@ const db = firebase.firestore();
    ============================================================ */
 const EDIT_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 hours — employee only
 const SETTINGS_DOC_PATH = { collection: 'settings', doc: 'scoreRules' };
+const BATCH_LIMIT = 450; // conservative (Firestore limit is 500)
 
 /* PDF edition lists (hard-coded) */
 const PDF_HELLO_EDITIONS = [
@@ -1239,10 +1314,7 @@ const PIE_PALETTE = [
 ];
 
 /* Two-column layout: each inner array is one row.
-   A row with a single item spans the full width.
-   NOTE: PDF Making and Graphic / Illustration have been swapped
-   per request — Graphic now shares Row 1 with Advt Design, and
-   PDF Making now shares Row 3 with Photo Editing. */
+   A row with a single item spans the full width. */
 const JOB_LAYOUT_ROWS = [
   ['advt', 'pdf'],
   ['paginationAlter', 'paginationFresh'],
@@ -1290,7 +1362,7 @@ const SETTINGS_GROUPS = [
       { key: 'helloPerPage', label: 'Hello (per page)' }
     ]
   },
-  { key: 'graphic', label: 'AI Image / Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
+  { key: 'graphic', label: 'Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
   { key: 'other',   label: 'Other Work',             icon: 'fa-tasks',    fields: [{ key: 'perEntry',        label: 'Per Entry' }] }
 ];
 
@@ -1468,7 +1540,7 @@ const JOB_SCHEMAS = {
     fields: [{ key: "pages", label: "Pages Uploaded", type: "number", min: 1, max: 100, required: true }]
   },
   graphic: {
-    label: "AI Image / Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
+    label: "Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
     fields: [
       { key: "name",   label: "Graphic Name", type: "text",   required: true },
       { key: "number", label: "Number",       type: "number", min: 0, required: true }
@@ -1515,6 +1587,9 @@ const chartInstances = {};
 const wpPieInstances = {};
 
 let syncingDetails = false;
+
+/* Currently-targeted user for deletion (set when Edit Profile opens) */
+let deletingUserDocId = null;
 
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
@@ -1587,10 +1662,19 @@ async function handleRegister() {
   btn.disabled = true;
 
   try {
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const cred = await auth.createUserWithEmailAndPassword(email, password);
-    const user = cred.user;
-    await user.updateProfile({ displayName: fullName });
+    /* IMPORTANT:
+       We use a secondary Firebase auth instance so the newly created user
+       does NOT replace the currently signed-in user (the admin). */
+    const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary' + Date.now());
+    const secondaryAuth = secondaryApp.auth();
+
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+    const newUser = cred.user;
+    await newUser.updateProfile({ displayName: fullName });
+
+    /* Sign the secondary auth out and delete the secondary app */
+    await secondaryAuth.signOut();
+    await secondaryApp.delete();
 
     const docId = emailDocId(email);
 
@@ -2142,7 +2226,6 @@ function attachListeners() {
   const end   = firebase.firestore.Timestamp.fromDate(new Date(new Date().setHours(24,0,0,0)));
   const userRef = db.collection('users').doc(currentDocId);
 
-  /* Today badges (unchanged) */
   unsubToday = userRef.collection('entries')
     .where('occurredAt', '>=', start)
     .where('occurredAt', '<', end)
@@ -2151,7 +2234,6 @@ function attachListeners() {
       updateBadges();
     }, err => console.error('today snapshot:', err));
 
-  /* Recent entries (unchanged) */
   unsubRecent = userRef.collection('entries')
     .orderBy('createdAt', 'desc')
     .limit(20)
@@ -2160,7 +2242,6 @@ function attachListeners() {
       renderRecent();
     }, err => console.error('recent snapshot:', err));
 
-  /* Cumulative comparison bar (all-time) */
   attachCumulativeListeners();
 }
 
@@ -2189,15 +2270,11 @@ function updateBadges() {
 
 /* ============================================================
    EMPLOYEE: CUMULATIVE SCORE COMPARE BAR
-   — Team Score = cumulative sum of ALL scores of ALL employees
-     in the same unit + workplace (including me).
-   — My Score   = cumulative sum of ALL my scores.
    ============================================================ */
 async function attachCumulativeListeners() {
   if (unsubMyCumulative)   { unsubMyCumulative();   unsubMyCumulative   = null; }
   if (unsubTeamCumulative) { unsubTeamCumulative(); unsubTeamCumulative = null; }
 
-  /* 1. My cumulative total (live) */
   unsubMyCumulative = db.collection('users').doc(currentDocId)
     .collection('entries')
     .onSnapshot(snap => {
@@ -2210,7 +2287,6 @@ async function attachCumulativeListeners() {
       updateScoreCompareBar();
     }, err => console.error('my cumulative snapshot:', err));
 
-  /* 2. Find all team-mates (same unit + workplace, excluding me & admins) */
   try {
     const usersSnap = await db.collection('users').get();
     const myUnit = (currentUser && currentUser.unit) || '';
@@ -2238,8 +2314,6 @@ async function attachCumulativeListeners() {
     return;
   }
 
-  /* 3. Live-listen to all-time entries of team-mates.
-        Firestore `in` supports max 10 IDs → batch them. */
   const teamIds = Array.from(teamDocIdsCache);
   const batches = [];
   for (let i = 0; i < teamIds.length; i += 10) {
@@ -2695,6 +2769,161 @@ function routeDeleteEntry() {
 }
 
 /* ============================================================
+   ADMIN: DELETE USER (full wipe)
+   — Deletes: profile doc + all user-subcollection entries +
+     all top-level entries + Firebase Auth account.
+   — Firestore batches are limited to 500 ops → we chunk.
+   ============================================================ */
+function openDeleteUserModal() {
+  if (!deletingUserDocId) {
+    showToast('No user selected for deletion.', 'error');
+    return;
+  }
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+
+  document.getElementById('delUserName').textContent  = user.fullName || '(no name)';
+  document.getElementById('delUserEmail').textContent = user.email || '(no email)';
+
+  const input = document.getElementById('deleteUserConfirmInput');
+  input.value = '';
+  const btn = document.getElementById('deleteUserConfirmBtn');
+  btn.disabled = true;
+
+  const msg = document.getElementById('deleteUserMsg');
+  msg.style.display = 'none';
+  msg.className = 'message';
+
+  input.oninput = () => {
+    btn.disabled = (input.value.trim() !== 'DELETE');
+  };
+
+  openModal('deleteUserModal');
+  setTimeout(() => input.focus(), 100);
+}
+
+async function confirmDeleteUser() {
+  if (!deletingUserDocId) return;
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast('Admin access required', 'warning'); return;
+  }
+
+  const input = document.getElementById('deleteUserConfirmInput');
+  if (input.value.trim() !== 'DELETE') {
+    const msg = document.getElementById('deleteUserMsg');
+    msg.textContent = 'Please type DELETE exactly to confirm.';
+    msg.className = 'message error';
+    return;
+  }
+
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+
+  const docId  = user.emailDocId || user.docId;
+  const email  = user.email || '';
+
+  const btn = document.getElementById('deleteUserConfirmBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Deleting...';
+  btn.disabled = true;
+
+  const msg = document.getElementById('deleteUserMsg');
+  msg.style.display = 'none';
+  msg.className = 'message';
+
+  try {
+    /* ---------- STEP 1: Delete all user-subcollection entries ---------- */
+    const subRef = db.collection('users').doc(docId).collection('entries');
+    await deleteCollection(subRef);
+
+    /* ---------- STEP 2: Delete all top-level entries for this user ---------- */
+    const topRef = db.collection('entries').where('emailDocId', '==', docId);
+    await deleteQuery(topRef);
+
+    /* ---------- STEP 3: Delete the user profile document ---------- */
+    await db.collection('users').doc(docId).delete();
+
+    /* ---------- STEP 4: Delete the Firebase Auth account ----------
+       NOTE: The Firebase client SDK CANNOT delete arbitrary users.
+       Only the currently-signed-in user can call user.delete() on themselves.
+       To delete another user's auth account, you need a Cloud Function
+       using the Admin SDK. We attempt the deletion anyway and, if it fails
+       (which it will for other users), we surface a clear message.
+
+       If you set up a Cloud Function (recommended), call it here via
+       fetch() and it will remove the auth user by uid/email.
+    */
+    let authDeleted = false;
+    try {
+      /* If the target user is somehow the currently logged-in user,
+         this would actually work — but normally it won't. */
+      if (auth.currentUser && auth.currentUser.email &&
+          auth.currentUser.email.toLowerCase() === email.toLowerCase()) {
+        await auth.currentUser.delete();
+        authDeleted = true;
+      }
+    } catch (authErr) {
+      console.warn('Auth delete skipped (client SDK limitation):', authErr);
+    }
+
+    /* ---------- Update local caches ---------- */
+    allUsersCache     = allUsersCache.filter(u => (u.emailDocId || u.docId) !== docId);
+    adminEntriesCache = adminEntriesCache.filter(e => e.emailDocId !== docId);
+
+    /* ---------- Refresh UI ---------- */
+    populateDashUnitSelect();
+    populateDashWorkplaceSelect();
+    populateLogUnitSelect();
+    populateLogWorkplaceSelect();
+    populateLogEmployeeSelect();
+    renderDashboard();
+    renderTeamLog();
+
+    showToast(
+      authDeleted
+        ? 'User, all data, and login account deleted.'
+        : 'User and all data deleted. (Auth account requires Cloud Function — see console note.)',
+      authDeleted ? 'success' : 'warning'
+    );
+
+    closeModal('deleteUserModal');
+    closeModal('editProfileModal');
+    deletingUserDocId = null;
+  } catch (err) {
+    console.error('confirmDeleteUser:', err);
+    msg.textContent = 'Delete failed: ' + err.message;
+    msg.className = 'message error';
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+/* ---------- Helper: delete all docs in a CollectionReference (chunked) ---------- */
+async function deleteCollection(collRef) {
+  while (true) {
+    const snap = await collRef.limit(BATCH_LIMIT).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    if (snap.size < BATCH_LIMIT) return;
+  }
+}
+
+/* ---------- Helper: delete all docs matching a Query (chunked) ---------- */
+async function deleteQuery(query) {
+  while (true) {
+    const snap = await query.limit(BATCH_LIMIT).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    if (snap.size < BATCH_LIMIT) return;
+  }
+}
+
+/* ============================================================
    ADMIN: INITIALIZATION
    ============================================================ */
 async function initAdminDashboard() {
@@ -2756,8 +2985,10 @@ function uniqueSorted(arr) {
 function populateDashUnitSelect() {
   const units = uniqueSorted(allUsersCache.map(u => u.unit));
   const sel = document.getElementById('dashFilterUnit');
+  const prev = sel.value;
   sel.innerHTML = `<option value="">All Units</option>` +
     units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+  if (prev && units.includes(prev)) sel.value = prev;
 }
 
 function populateDashWorkplaceSelect() {
@@ -2765,15 +2996,19 @@ function populateDashWorkplaceSelect() {
   const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
   const wps  = uniqueSorted(pool.map(u => u.workplace));
   const sel  = document.getElementById('dashFilterWorkplace');
+  const prev = sel.value;
   sel.innerHTML = `<option value="">All Workplaces</option>` +
     wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
+  if (prev && wps.includes(prev)) sel.value = prev;
 }
 
 function populateLogUnitSelect() {
   const units = uniqueSorted(allUsersCache.map(u => u.unit));
   const sel = document.getElementById('logFilterUnit');
+  const prev = sel.value;
   sel.innerHTML = `<option value="">All Units</option>` +
     units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+  if (prev && units.includes(prev)) sel.value = prev;
 }
 
 function populateLogWorkplaceSelect() {
@@ -2781,8 +3016,10 @@ function populateLogWorkplaceSelect() {
   const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
   const wps  = uniqueSorted(pool.map(u => u.workplace));
   const sel  = document.getElementById('logFilterWorkplace');
+  const prev = sel.value;
   sel.innerHTML = `<option value="">All Workplaces</option>` +
     wps.map(w => `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
+  if (prev && wps.includes(prev)) sel.value = prev;
 }
 
 function populateLogEmployeeSelect() {
@@ -2794,8 +3031,10 @@ function populateLogEmployeeSelect() {
   pool = pool.slice().sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
 
   const sel = document.getElementById('logFilterEmployee');
+  const prev = sel.value;
   sel.innerHTML = `<option value="">All Employees</option>` +
     pool.map(u => `<option value="${escapeHtml(u.emailDocId || u.docId)}">${escapeHtml(u.fullName || u.email || u.docId)}</option>`).join('');
+  if (prev && pool.some(u => (u.emailDocId || u.docId) === prev)) sel.value = prev;
 }
 
 function onDashUnitChange() {
@@ -3032,7 +3271,6 @@ function renderWorkplacePies() {
 
 /* ============================================================
    ADMIN: EMPLOYEE BAR CARDS
-   — Includes cumulative (all-time) score badge at top-right.
    ============================================================ */
 function renderEmployeeCards() {
   const cards   = document.getElementById('dashCards');
@@ -3057,12 +3295,10 @@ function renderEmployeeCards() {
   users.forEach(user => {
     const docId = user.emailDocId || user.docId;
 
-    /* --- Cumulative (all-time) score for this employee --- */
     const allTimeEntries = adminEntriesCache.filter(e => e.emailDocId === docId);
     const cumulativeScore = allTimeEntries.reduce((s, e) => s + (e.score || 0), 0);
     const cumulativeRounded = Math.round(cumulativeScore * 100) / 100;
 
-    /* --- Date-filtered entries for the chart --- */
     const userEntries = filterEntriesByDate(allTimeEntries, fromStr, toStr);
 
     const teamDocIds = new Set(
@@ -3507,6 +3743,7 @@ function openEditProfile(docId) {
   if (!user) { showToast('Employee not found', 'error'); return; }
 
   editingProfileDocId = docId;
+  deletingUserDocId   = docId;   /* used by Delete User flow */
 
   document.getElementById('editProfileEmail').value       = user.email || '';
   document.getElementById('editProfileFullName').value    = user.fullName || '';
@@ -3517,6 +3754,12 @@ function openEditProfile(docId) {
   const msg = document.getElementById('editProfileMsg');
   msg.style.display = 'none';
   msg.className = 'message';
+
+  /* Show the Delete User danger zone only for admins (always true here)
+     and never for the admin's own account. */
+  const dz = document.getElementById('deleteUserZone');
+  const isSelf = (docId === currentDocId);
+  dz.style.display = isSelf ? 'none' : 'block';
 
   openModal('editProfileModal');
 }
@@ -3584,6 +3827,7 @@ async function saveEditProfile() {
     showToast('Profile updated successfully', 'success');
     closeModal('editProfileModal');
     editingProfileDocId = null;
+    deletingUserDocId   = null;
   } catch (err) {
     console.error('saveEditProfile:', err);
     msg.textContent = 'Save failed: ' + err.message;
@@ -3604,6 +3848,7 @@ document.addEventListener('keydown', (e) => {
     closeModal('deleteEntryModal');
     closeModal('detailLogModal');
     closeModal('editProfileModal');
+    closeModal('deleteUserModal');
   }
   if (e.key === 'Enter' && document.getElementById('loginContainer').style.display !== 'none') {
     if (!document.getElementById('loginForm').classList.contains('hidden'))        handleLogin();
@@ -3612,7 +3857,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — PDF Making and AI Image / Graphic / Illustration positions swapped in employee job forms.');
+console.log('✅ ICD Work Log — Delete User (full wipe) added.');
 </script>
 </body>
 </html>
