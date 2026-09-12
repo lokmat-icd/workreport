@@ -434,12 +434,32 @@ table tr:hover td { background: #f8f9fc; }
 .empty-state h3 { font-size: 15px; color: #555; margin-bottom: 4px; }
 .empty-state p { font-size: 13px; color: #999; }
 
-/* ============ ACCORDION (employee) ============ */
+/* ============ ACCORDION (employee) — two-column layout ============ */
+#jobSections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.job-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+.job-row.single {
+  grid-template-columns: 1fr;
+}
+.job-row .job-section {
+  margin-bottom: 0;
+  height: 100%;
+}
 .job-section {
   background: #fff; border-radius: 12px;
-  margin-bottom: 12px; overflow: hidden;
+  margin-bottom: 0; overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   border: 1px solid rgba(0,0,0,0.04);
+  display: flex; flex-direction: column;
 }
 .job-section[open] { box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
 .job-section > summary {
@@ -477,6 +497,12 @@ table tr:hover td { background: #f8f9fc; }
 .job-body {
   padding: 4px 20px 20px 20px;
   border-top: 1px solid #f0f2f5; background: #fafbfc;
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+}
+.job-form {
+  display: flex; flex-direction: column;
+  flex: 1 1 auto;
 }
 .job-form .form-row {
   display: grid;
@@ -484,7 +510,8 @@ table tr:hover td { background: #f8f9fc; }
   gap: 14px; margin-top: 16px;
 }
 .job-form .form-actions {
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 18px;
   display: flex; gap: 10px; align-items: center;
 }
 
@@ -554,10 +581,6 @@ table tr:hover td { background: #f8f9fc; }
   text-align: right;
 }
 .edition-total strong { color: #1a1a2e; font-size: 14px; }
-
-@media (max-width: 640px) {
-  .edition-grid { grid-template-columns: 1fr; }
-}
 
 /* ============ MODAL ============ */
 .modal-overlay {
@@ -648,6 +671,8 @@ table tr:hover td { background: #f8f9fc; }
   .app-header .title-block h1 { font-size: 18px; }
   .cards-grid { grid-template-columns: 1fr; }
   .wp-pies-grid { grid-template-columns: 1fr; }
+  /* Not used on mobile, but keep a safe fallback */
+  .job-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .app-header { padding: 12px 14px; }
@@ -656,6 +681,7 @@ table tr:hover td { background: #f8f9fc; }
   .toast-container { left: 14px; right: 14px; bottom: 14px; }
   .modal-overlay { padding: 20px 10px; }
   table th, table td { padding: 8px 10px; font-size: 12px; }
+  .edition-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -1068,6 +1094,16 @@ const PIE_PALETTE = [
   '#3949ab', '#7cb342', '#d81b60', '#00897b'
 ];
 
+/* Two-column layout: each inner array is one row.
+   A row with a single item spans the full width. */
+const JOB_LAYOUT_ROWS = [
+  ['advt', 'graphic'],
+  ['paginationAlter', 'paginationFresh'],
+  ['pdf', 'photo'],
+  ['epaper', 'typing'],
+  ['other']
+];
+
 /* ============================================================
    SETTINGS FIELD DEFINITIONS
    ============================================================ */
@@ -1140,7 +1176,6 @@ function safeId(s) {
 function workplaceGroupKey(wp) {
   if (!wp) return '';
   const str = String(wp).trim();
-  // Match ASCII hyphen, en-dash, em-dash (with optional surrounding spaces)
   const m = str.match(/^([^\-–—]+?)\s*[\-–—]/);
   if (m && m[1]) return m[1].trim();
   return str;
@@ -1325,7 +1360,10 @@ const TEAM_LOG_PAGE = 100;
 
 let detailLogUser = null;
 const chartInstances = {};
-const wpPieInstances = {};   // separate registry for workplace pie charts
+const wpPieInstances = {};
+
+/* Flag to prevent infinite loops when syncing sibling <details> */
+let syncingDetails = false;
 
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
@@ -1625,74 +1663,90 @@ function computeScore(type, payload) {
 }
 
 /* ============================================================
-   EMPLOYEE: ACCORDION
+   EMPLOYEE: ACCORDION — two-column layout, paired open/close
    ============================================================ */
 function renderAccordion() {
   const container = document.getElementById('jobSections');
   let html = '';
-  for (const type of Object.keys(JOB_SCHEMAS)) {
-    const schema = JOB_SCHEMAS[type];
-    const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
 
-    // Build the form body. For PDF (editionGrid), we render the grid then
-    // append a single Date & Time field. For all other types, the fields
-    // and the Date & Time field are placed together in one .form-row grid.
-    let bodyHtml = '';
-    if (hasEditionGrid) {
-      bodyHtml = schema.fields.map(f => renderEditionGrid(f, type, 'new', null)).join('');
-      bodyHtml += `
-        <div class="form-row" style="margin-top:16px;">
-          <div class="form-group">
-            <label>Date &amp; Time <span class="required">*</span></label>
-            <input type="datetime-local" id="field-${type}-occurredAt" required>
-          </div>
-        </div>`;
-    } else {
-      bodyHtml = `
-        <div class="form-row">
-          ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
-          <div class="form-group">
-            <label>Date &amp; Time <span class="required">*</span></label>
-            <input type="datetime-local" id="field-${type}-occurredAt" required>
-          </div>
-        </div>`;
-    }
+  JOB_LAYOUT_ROWS.forEach(rowTypes => {
+    const isSingle = rowTypes.length === 1;
+    html += `<div class="job-row${isSingle ? ' single' : ''}" data-row="${rowTypes.join('|')}">`;
+    rowTypes.forEach(type => {
+      html += renderJobSection(type);
+    });
+    html += `</div>`;
+  });
 
-    html += `
-      <details class="job-section" data-type="${type}" id="section-${type}">
-        <summary>
-          <span class="summary-icon"><i class="fas ${schema.icon}"></i></span>
-          <span class="summary-title">
-            ${escapeHtml(schema.label)}
-            <small>${escapeHtml(schema.subtitle || '')}</small>
-          </span>
-          <span class="entry-badge" id="badge-${type}">0 today</span>
-        </summary>
-        <div class="job-body">
-          <form class="job-form" onsubmit="event.preventDefault(); submitEntry('${type}');">
-            ${bodyHtml}
-            <div class="form-actions">
-              <button type="submit" class="btn btn-success">
-                <i class="fas fa-save"></i> Save Entry
-              </button>
-              <button type="reset" class="btn btn-outline">
-                <i class="fas fa-undo"></i> Clear
-              </button>
-            </div>
-          </form>
-        </div>
-      </details>
-    `;
-  }
   container.innerHTML = html;
 
-  // Seed all Date & Time fields with "now"
-  for (const type of Object.keys(JOB_SCHEMAS)) {
-    const el = document.getElementById(`field-${type}-occurredAt`);
-    if (el) el.value = localNow();
+  // Attach paired open/close handlers
+  attachAccordionSync();
+
+  // Attach PDF grid listeners
+  attachPdfGridListeners('pdf', 'new');
+}
+
+function renderJobSection(type) {
+  const schema = JOB_SCHEMAS[type];
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+  let bodyHtml = '';
+  if (hasEditionGrid) {
+    bodyHtml = schema.fields.map(f => renderEditionGrid(f, type, 'new', null)).join('');
+  } else {
+    bodyHtml = `
+      <div class="form-row">
+        ${schema.fields.map(f => renderField(f, type, 'new')).join('')}
+      </div>`;
   }
 
-  attachPdfGridListeners('pdf', 'new');
+  return `
+    <details class="job-section" data-type="${type}" id="section-${type}">
+      <summary>
+        <span class="summary-icon"><i class="fas ${schema.icon}"></i></span>
+        <span class="summary-title">
+          ${escapeHtml(schema.label)}
+          <small>${escapeHtml(schema.subtitle || '')}</small>
+        </span>
+        <span class="entry-badge" id="badge-${type}">0 today</span>
+      </summary>
+      <div class="job-body">
+        <form class="job-form" onsubmit="event.preventDefault(); submitEntry('${type}');">
+          ${bodyHtml}
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save"></i> Save Entry
+            </button>
+            <button type="reset" class="btn btn-outline">
+              <i class="fas fa-undo"></i> Clear
+            </button>
+          </div>
+        </form>
+      </div>
+    </details>
+  `;
+}
+
+/* Pair the open/close state of <details> within the same .job-row.
+   B1 behavior: clicking one opens both; closing one closes both. */
+function attachAccordionSync() {
+  document.querySelectorAll('#jobSections .job-row').forEach(row => {
+    const details = row.querySelectorAll('details.job-section');
+    if (details.length < 2) return;
+
+    details.forEach(d => {
+      d.addEventListener('toggle', () => {
+        if (syncingDetails) return;
+        syncingDetails = true;
+        const isOpen = d.open;
+        details.forEach(other => {
+          if (other !== d) other.open = isOpen;
+        });
+        syncingDetails = false;
+      });
+    });
+  });
 }
 
 /* ---------- Normal field renderer ---------- */
@@ -1730,9 +1784,7 @@ function renderField(f, type, mode, value) {
     <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
 }
 
-/* ---------- PDF edition grid renderer ----------
-   NOTE: This renderer intentionally does NOT include a Date & Time field.
-   The caller is responsible for adding exactly one date field. */
+/* ---------- PDF edition grid renderer ---------- */
 function renderEditionGrid(f, type, mode, savedEditions) {
   const prefix = `${mode}-${type}-${f.key}`;
   const savedHello = (savedEditions && savedEditions.hello) || {};
@@ -1831,6 +1883,8 @@ function readPdfGridPayload(prefix) {
 
 /* ============================================================
    EMPLOYEE: SUBMIT ENTRY
+   — Date & Time is now auto-captured from the system clock
+     when the entry is saved. No date input is shown in the UI.
    ============================================================ */
 async function submitEntry(type) {
   if (!currentDocId || !currentUser) return;
@@ -1869,10 +1923,6 @@ async function submitEntry(type) {
     }
   }
 
-  const occurredEl  = document.getElementById(`field-${type}-occurredAt`);
-  const occurredStr = occurredEl.value;
-  if (!occurredStr) { showToast('Please pick a date and time', 'warning'); return; }
-
   if (schema.compute) schema.compute(payload);
 
   const rawScore = computeScore(type, payload);
@@ -1882,7 +1932,8 @@ async function submitEntry(type) {
   }
   const score = Math.round(rawScore * 100) / 100;
 
-  const occurredDate = new Date(occurredStr);
+  /* Auto-capture current date & time in the background */
+  const occurredDate = new Date();
 
   const sharedBase = {
     uid: auth.currentUser.email,
@@ -1932,7 +1983,6 @@ async function submitEntry(type) {
         else el.value = '';
       }
     }
-    occurredEl.value = localNow();
     showToast('Entry saved!', 'success');
   } catch (err) {
     console.error('submitEntry:', err);
@@ -2077,6 +2127,7 @@ function stripPrefix(name, prefix) {
 
 /* ============================================================
    EMPLOYEE: EDIT / DELETE ENTRY
+   — Date & Time is locked (shown disabled for reference only).
    ============================================================ */
 function openEditEntry(entryId) {
   const entry = recentEntries.find(e => e.id === entryId);
@@ -2099,8 +2150,6 @@ function openEditEntry(entryId) {
     html += `</div>`;
   }
 
-  // Always append exactly ONE disabled Date & Time field (locked) — for both
-  // editionGrid and non-editionGrid types. This makes the edit modal uniform.
   const occStr = toLocalInputValue(entry.occurredAt);
   html += `<div class="form-group" style="margin-top:14px;">
              <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
@@ -2214,7 +2263,6 @@ async function confirmDeleteEntry() {
 
 /* ============================================================
    ADMIN: EDIT / DELETE ENTRY (from Team Log)
-   — NO time-window restriction for admin.
    ============================================================ */
 function openAdminEditEntry(entryId) {
   const entry = adminEntriesCache.find(e => e.id === entryId);
@@ -2236,14 +2284,12 @@ function openAdminEditEntry(entryId) {
     html += `</div>`;
   }
 
-  // Always append exactly ONE disabled Date & Time field (locked)
   const occStr = toLocalInputValue(entry.occurredAt);
   html += `<div class="form-group" style="margin-top:14px;">
              <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
              <input type="datetime-local" value="${occStr}" disabled>
            </div>`;
 
-  // Show employee info banner
   html = `<div style="background:#f8f9fc;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#555;border-left:3px solid #4fc3f7;">
     <i class="fas fa-user"></i> <strong>${escapeHtml(entry.fullName || entry.uid || '-')}</strong>
     &nbsp;•&nbsp; <i class="fas fa-building"></i> ${escapeHtml(entry.unit || '-')}
@@ -2319,7 +2365,6 @@ async function saveAdminEditedEntry() {
 
     await batch.commit();
 
-    // Update local cache so UI reflects immediately
     const cachedTop = adminEntriesCache.find(e => e.id === entry.id);
     if (cachedTop) { cachedTop.payload = payload; cachedTop.score = score; }
 
@@ -2361,7 +2406,6 @@ async function confirmAdminDeleteEntry() {
     batch.delete(db.collection('entries').doc(entry.id));
     await batch.commit();
 
-    // Remove from local cache
     adminEntriesCache = adminEntriesCache.filter(e => e.id !== entry.id);
 
     showToast('Entry deleted', 'success');
@@ -2587,7 +2631,6 @@ function renderWorkplacePies() {
   const grid = document.getElementById('wpPiesGrid');
   if (!grid) return;
 
-  // Destroy previous chart instances
   Object.values(wpPieInstances).forEach(c => { try { c.destroy(); } catch(e) {} });
   Object.keys(wpPieInstances).forEach(k => delete wpPieInstances[k]);
 
@@ -2602,8 +2645,6 @@ function renderWorkplacePies() {
     return;
   }
 
-  // Group employees by workplace prefix key
-  // map: groupLC -> { displayLabel, subWorkplaces:Set, employees:[user,...] }
   const groups = {};
   users.forEach(u => {
     const key = workplaceGroupKey(u.workplace);
@@ -2619,7 +2660,6 @@ function renderWorkplacePies() {
     if (u.workplace) groups[lc].subWorkplaces.add(u.workplace);
   });
 
-  // Sort groups alphabetically by display label
   const groupKeys = Object.keys(groups).sort((a, b) =>
     groups[a].displayLabel.localeCompare(groups[b].displayLabel)
   );
@@ -2629,7 +2669,6 @@ function renderWorkplacePies() {
   groupKeys.forEach(lc => {
     const group = groups[lc];
 
-    // Sum scores per employee within the date range (respects Unit/Workplace filter already)
     const employeeScores = group.employees.map(u => {
       const docId = u.emailDocId || u.docId;
       const entries = adminEntriesCache.filter(e => e.emailDocId === docId);
@@ -2641,14 +2680,12 @@ function renderWorkplacePies() {
       };
     });
 
-    // Sort descending so biggest slices come first (nicer pie layout)
     employeeScores.sort((a, b) => b.score - a.score);
 
     const grandTotal = employeeScores.reduce((s, e) => s + e.score, 0);
     const employeesWithScore = employeeScores.filter(e => e.score > 0);
     const cardId = 'wppie-' + lc.replace(/[^a-z0-9]/g, '_') + '-' + Math.random().toString(36).slice(2, 6);
 
-    // Sub-workplace chips (only if more than one distinct)
     const subs = Array.from(group.subWorkplaces).sort();
     const subChipsHtml = subs.length > 1
       ? subs.map(s => `<span class="chip-mini">${escapeHtml(s)}</span>`).join('')
@@ -2739,7 +2776,7 @@ function renderWorkplacePies() {
 }
 
 /* ============================================================
-   ADMIN: EMPLOYEE BAR CARDS (existing)
+   ADMIN: EMPLOYEE BAR CARDS
    ============================================================ */
 function renderEmployeeCards() {
   const cards   = document.getElementById('dashCards');
@@ -2986,7 +3023,6 @@ function renderTeamLog() {
   renderTeamLogRows();
 }
 
-/* ---------- Stats chips ---------- */
 function renderTeamLogStats(rows) {
   const container = document.getElementById('teamLogStats');
   if (!container) return;
@@ -3012,7 +3048,6 @@ function renderTeamLogStats(rows) {
   container.innerHTML = html;
 }
 
-/* ---------- Table rows ---------- */
 function renderTeamLogRows() {
   const body     = document.getElementById('teamLogBody');
   const countEl  = document.getElementById('teamLogCount');
@@ -3044,7 +3079,6 @@ function renderTeamLogRows() {
     const detail = summarizePayload(e.type, e.payload);
     const scoreVal = (e.score === null || e.score === undefined) ? 0 : e.score;
 
-    // Admin has no time restriction — always show edit/delete buttons
     const actionsHtml = `<div style="display:flex;gap:4px;justify-content:center;">
          <button class="row-btn edit" onclick="openAdminEditEntry('${e.id}')" title="Edit">
            <i class="fas fa-edit"></i>
@@ -3249,7 +3283,6 @@ async function saveEditProfile() {
   btn.disabled  = true;
 
   try {
-    // 1. Update the users document
     await db.collection('users').doc(editingProfileDocId).set({
       fullName,
       unit,
@@ -3259,7 +3292,6 @@ async function saveEditProfile() {
       updatedBy: currentDocId
     }, { merge: true });
 
-    // 2. Update cached users list so UI reflects change immediately
     const u = allUsersCache.find(x => (x.emailDocId || x.docId) === editingProfileDocId);
     if (u) {
       u.fullName    = fullName;
@@ -3268,8 +3300,6 @@ async function saveEditProfile() {
       u.designation = designation;
     }
 
-    // 3. Propagate name/unit/workplace to all past entries so Team Log
-    //    shows updated values (emailDocId is intentionally NOT touched).
     try {
       const entriesSnap = await db.collection('entries')
         .where('emailDocId', '==', editingProfileDocId)
@@ -3285,7 +3315,6 @@ async function saveEditProfile() {
       console.warn('Could not propagate to entries:', propagateErr);
     }
 
-    // 4. Refresh dashboard & team log with new values
     renderDashboard();
     renderTeamLog();
 
@@ -3320,7 +3349,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — PDF date/time field duplication fixed.');
+console.log('✅ ICD Work Log — two-column job forms, background date/time capture.');
 </script>
 </body>
 </html>
