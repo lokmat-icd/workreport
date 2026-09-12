@@ -1239,11 +1239,14 @@ const PIE_PALETTE = [
 ];
 
 /* Two-column layout: each inner array is one row.
-   A row with a single item spans the full width. */
+   A row with a single item spans the full width.
+   NOTE: PDF Making and Graphic / Illustration have been swapped
+   per request — Graphic now shares Row 1 with Advt Design, and
+   PDF Making now shares Row 3 with Photo Editing. */
 const JOB_LAYOUT_ROWS = [
-  ['advt', 'graphic'],
+  ['advt', 'pdf'],
   ['paginationAlter', 'paginationFresh'],
-  ['pdf', 'photo'],
+  ['graphic', 'photo'],
   ['epaper', 'typing'],
   ['other']
 ];
@@ -1287,7 +1290,7 @@ const SETTINGS_GROUPS = [
       { key: 'helloPerPage', label: 'Hello (per page)' }
     ]
   },
-  { key: 'graphic', label: 'Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
+  { key: 'graphic', label: 'AI Image / Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
   { key: 'other',   label: 'Other Work',             icon: 'fa-tasks',    fields: [{ key: 'perEntry',        label: 'Per Entry' }] }
 ];
 
@@ -1465,7 +1468,7 @@ const JOB_SCHEMAS = {
     fields: [{ key: "pages", label: "Pages Uploaded", type: "number", min: 1, max: 100, required: true }]
   },
   graphic: {
-    label: "Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
+    label: "AI Image / Graphic / Illustration", icon: "fa-palette", subtitle: "Custom graphics and illustrations",
     fields: [
       { key: "name",   label: "Graphic Name", type: "text",   required: true },
       { key: "number", label: "Number",       type: "number", min: 0, required: true }
@@ -3609,7 +3612,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — employee cumulative score badge added to admin dashboard cards.');
+console.log('✅ ICD Work Log — PDF Making and AI Image / Graphic / Illustration positions swapped in employee job forms.');
 </script>
 </body>
 </html>
