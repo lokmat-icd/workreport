@@ -1662,19 +1662,14 @@ async function handleRegister() {
   btn.disabled = true;
 
   try {
-    /* IMPORTANT:
-       We use a secondary Firebase auth instance so the newly created user
-       does NOT replace the currently signed-in user (the admin). */
-    const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary' + Date.now());
-    const secondaryAuth = secondaryApp.auth();
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const user = cred.user;
+    await user.updateProfile({ displayName: fullName });
 
-    const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
-    const newUser = cred.user;
-    await newUser.updateProfile({ displayName: fullName });
-
-    /* Sign the secondary auth out and delete the secondary app */
-    await secondaryAuth.signOut();
-    await secondaryApp.delete();
+    /* ⭐ CRITICAL: Force-refresh the ID token so Firestore's request.auth
+       is guaranteed to be populated before we attempt the write. */
+    await user.getIdToken(true);
 
     const docId = emailDocId(email);
 
@@ -1692,11 +1687,23 @@ async function handleRegister() {
     });
 
     showMessage('registerMessage', 'Account created!', 'success');
+
+    document.getElementById('regFullName').value    = '';
+    document.getElementById('regBirthDate').value   = '';
+    document.getElementById('regUnit').value        = '';
+    document.getElementById('regWorkplace').value   = '';
+    document.getElementById('regDesignation').value = '';
+    document.getElementById('regEmail').value       = '';
+    document.getElementById('regPassword').value    = '';
+    document.getElementById('regConfirm').value     = '';
+
   } catch (err) {
     console.error('Register:', err);
     let msg = err.message;
     if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in.';
     else if (err.code === 'auth/weak-password')   msg = 'Password too weak. Use at least 6 characters.';
+    else if (err.code === 'auth/invalid-email')   msg = 'Invalid email address.';
+    else if (err.code === 'permission-denied')    msg = 'Firestore permission denied. Check your security rules.';
     showMessage('registerMessage', msg, 'error');
   } finally {
     btn.innerHTML = orig;
@@ -3180,11 +3187,6 @@ function renderWorkplacePies() {
     const employeesWithScore = employeeScores.filter(e => e.score > 0);
     const cardId = 'wppie-' + lc.replace(/[^a-z0-9]/g, '_') + '-' + Math.random().toString(36).slice(2, 6);
 
-    const subs = Array.from(group.subWorkplaces).sort();
-    const subChipsHtml = subs.length > 1
-      ? subs.map(s => `<span class="chip-mini">${escapeHtml(s)}</span>`).join('')
-      : '';
-
     const card = document.createElement('div');
     card.className = 'wp-pie-card';
     card.innerHTML = `
@@ -3195,7 +3197,6 @@ function renderWorkplacePies() {
         </div>
         <span class="wp-count">${employeeScores.length} emp</span>
       </div>
-      ${subChipsHtml ? `<div class="wp-pie-sub">${subChipsHtml}</div>` : ''}
       <div class="wp-pie-total">Total Score: <strong>${grandTotal.toFixed(2)}</strong></div>
       <div class="wp-pie-wrap" id="wrap-${cardId}">
         ${employeesWithScore.length === 0
@@ -3235,26 +3236,26 @@ function renderWorkplacePies() {
         maintainAspectRatio: false,
         layout: { padding: 4 },
         plugins: {
-		  legend: { display: false },
-		  tooltip: {
-			backgroundColor: 'rgba(26,26,46,0.95)',
-			titleColor: '#fff',
-			bodyColor: '#e8ecf1',
-			padding: 10,
-			cornerRadius: 8,
-			displayColors: true,
-			boxWidth: 10,
-			boxHeight: 10,
-			callbacks: {
-			  title: (items) => items[0]?.label || '',
-			  label: (ctx) => {
-				const val = ctx.parsed || 0;
-				const pct = grandTotal > 0 ? (val / grandTotal) * 100 : 0;
-				return `  Score: ${val.toFixed(2)}  (${pct.toFixed(1)}%)`;
-			  }
-			}
-		  }
-		},
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(26,26,46,0.95)',
+            titleColor: '#fff',
+            bodyColor: '#e8ecf1',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: true,
+            boxWidth: 10,
+            boxHeight: 10,
+            callbacks: {
+              title: (items) => items[0]?.label || '',
+              label: (ctx) => {
+                const val = ctx.parsed || 0;
+                const pct = grandTotal > 0 ? (val / grandTotal) * 100 : 0;
+                return `  Score: ${val.toFixed(2)}  (${pct.toFixed(1)}%)`;
+              }
+            }
+          }
+        },
         onClick: (evt, elements) => {
           if (!elements || elements.length === 0) return;
           const idx = elements[0].index;
