@@ -60,6 +60,18 @@ body {
 }
 .user-badge i { color: #4fc3f7; }
 
+/* Role badge in header */
+.role-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+.role-badge.admin  { background: rgba(255,193,7,0.18); color: #ffc107; border: 1px solid rgba(255,193,7,0.35); }
+.role-badge.hod    { background: rgba(76,175,80,0.18); color: #66bb6a; border: 1px solid rgba(76,175,80,0.35); }
+.role-badge.employee { display: none; }
+
 .icon-btn {
   width: 36px; height: 36px; border: none; border-radius: 8px;
   background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;
@@ -199,13 +211,11 @@ body {
   gap: 6px;
 }
 .score-compare-card .sc-title i { color: #4fc3f7; }
-
 .score-compare-card .sc-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .score-compare-card .sc-label {
   font-size: 12px;
   font-weight: 600;
@@ -218,7 +228,6 @@ body {
 .score-compare-card .sc-label .sc-num { font-weight: 700; color: #1a1a2e; }
 .score-compare-card .sc-label.mine .sc-num { color: #1976d2; }
 .score-compare-card .sc-label.team .sc-num { color: #555; }
-
 .score-compare-card .sc-bar-wrap {
   flex: 1;
   position: relative;
@@ -301,6 +310,9 @@ body {
 .filter-bar select:focus, .filter-bar input:focus {
   outline: none; border-color: #4fc3f7; background: #fff;
 }
+.filter-bar select:disabled {
+  background: #f0f2f5; color: #888; cursor: not-allowed;
+}
 .filter-bar .btn-reset {
   padding: 9px 14px; border: 2px solid #e8ecf1; border-radius: 8px;
   background: transparent; color: #666; cursor: pointer;
@@ -359,17 +371,6 @@ body {
   font-size: 11px; font-weight: 600;
   white-space: nowrap;
 }
-.wp-pie-sub {
-  font-size: 11px; color: #888; margin-bottom: 10px;
-  display: flex; flex-wrap: wrap; gap: 6px;
-  line-height: 1.4;
-}
-.wp-pie-sub .chip-mini {
-  background: #f4f6fa;
-  padding: 2px 8px; border-radius: 8px;
-  font-size: 10.5px; color: #666;
-  border: 1px solid #e8ecf1;
-}
 .wp-pie-total {
   font-size: 12px; color: #555;
   margin-bottom: 6px;
@@ -411,12 +412,6 @@ body {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.stat-chip.grand {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  border-left-color: #ffc107;
-}
-.stat-chip.grand .chip-label { color: rgba(255,255,255,0.75); }
-.stat-chip.grand .chip-value { color: #ffc107; }
 
 /* ============ EMPLOYEE CARDS ============ */
 .cards-grid {
@@ -454,7 +449,6 @@ body {
 .emp-info .meta span { display: inline-flex; align-items: center; gap: 4px; }
 .emp-info .meta i { color: #4fc3f7; font-size: 10px; }
 
-/* --- Cumulative score badge on employee card (top-right corner) --- */
 .emp-cum-score {
   flex-shrink: 0;
   display: flex;
@@ -750,6 +744,116 @@ table tr:hover td { background: #f8f9fc; }
 }
 .settings-fields .form-group { margin-bottom: 0; }
 
+/* Settings tabs (Score Rules / HOD Assignments) */
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  background: #f0f2f5;
+  padding: 4px;
+  border-radius: 10px;
+}
+.settings-tab-btn {
+  flex: 1;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.settings-tab-btn:hover { background: #fff; color: #1a1a2e; }
+.settings-tab-btn.active {
+  background: #fff;
+  color: #1976d2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.settings-pane { display: none; }
+.settings-pane.active { display: block; }
+
+/* HOD assignment rows */
+.hod-list {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 12px;
+}
+.hod-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid #e8ecf1;
+  border-radius: 10px;
+}
+.hod-row .hod-email {
+  flex: 0 0 220px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  word-break: break-all;
+}
+.hod-row .hod-units {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hod-row .unit-chip {
+  background: #e3f2fd;
+  color: #0d47a1;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.hod-row .hod-actions {
+  display: flex; gap: 4px;
+  flex-shrink: 0;
+}
+.hod-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: #999;
+  font-size: 13px;
+  background: #fafbfc;
+  border: 2px dashed #e8ecf1;
+  border-radius: 10px;
+}
+
+/* HOD edit dialog: dynamic unit rows */
+.unit-row {
+  display: flex; gap: 8px; margin-bottom: 8px;
+  align-items: center;
+}
+.unit-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #e8ecf1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fafbfc;
+}
+.unit-row input:focus {
+  outline: none; border-color: #4fc3f7; background: #fff;
+}
+.unit-row .remove-unit-btn {
+  width: 34px; height: 34px;
+  border: none; border-radius: 8px;
+  background: #ffebee; color: #d32f2f;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.unit-row .remove-unit-btn:hover { background: #ffcdd2; }
+
 /* ---- Danger zone (Delete User) ---- */
 .danger-zone {
   margin-top: 22px;
@@ -816,6 +920,8 @@ table tr:hover td { background: #f8f9fc; }
   .cards-grid { grid-template-columns: 1fr; }
   .wp-pies-grid { grid-template-columns: 1fr; }
   .job-row { grid-template-columns: 1fr; }
+  .hod-row { flex-direction: column; align-items: stretch; }
+  .hod-row .hod-email { flex: none; }
 }
 @media (max-width: 640px) {
   .app-header { padding: 12px 14px; }
@@ -895,7 +1001,7 @@ table tr:hover td { background: #f8f9fc; }
         <img src="https://lh3.googleusercontent.com/d/15dKd_n6e4B4sKUVGkmxPlsJ5LUhAZLgM" alt="ICD Work Log Logo">
       </div>
       <div class="title-block">
-        <h1>ICD Work Log</h1>
+        <h1>ICD Work Log <span id="headerRoleBadge" class="role-badge"></span></h1>
         <div class="welcome">Welcome : <strong id="userDisplay">User</strong></div>
       </div>
       <div class="header-actions">
@@ -903,7 +1009,7 @@ table tr:hover td { background: #f8f9fc; }
           <i class="fas fa-user-circle"></i>
           <span id="userBadgeEmail">User</span>
         </div>
-        <button class="icon-btn gear" id="settingsBtn" style="display:none;" onclick="openSettings()" title="Score Settings (Admin)">
+        <button class="icon-btn gear" id="settingsBtn" style="display:none;" onclick="openSettings()" title="Settings (Admin)">
           <i class="fas fa-cog"></i>
         </button>
         <button class="icon-btn danger" onclick="handleLogout()" title="Logout">
@@ -964,13 +1070,13 @@ table tr:hover td { background: #f8f9fc; }
       </div>
     </div>
 
-    <!-- ============ ADMIN VIEW ============ -->
-    <div id="adminView" style="display:none;">
+    <!-- ============ MANAGEMENT VIEW (Admin + HOD) ============ -->
+    <div id="managementView" style="display:none;">
       <div class="tab-bar">
-        <button class="tab-btn active" id="tabBtnDashboard" onclick="switchAdminTab('dashboard')">
+        <button class="tab-btn active" id="tabBtnDashboard" onclick="switchMgmtTab('dashboard')">
           <i class="fas fa-chart-bar"></i> Dashboard
         </button>
-        <button class="tab-btn" id="tabBtnTeamLog" onclick="switchAdminTab('teamlog')">
+        <button class="tab-btn" id="tabBtnTeamLog" onclick="switchMgmtTab('teamlog')">
           <i class="fas fa-list-alt"></i> Team Log
         </button>
       </div>
@@ -985,8 +1091,8 @@ table tr:hover td { background: #f8f9fc; }
           </div>
           <div id="wpPiesGrid" class="wp-pies-grid"></div>
         </div>
-		
-		<div class="filter-bar">
+
+        <div class="filter-bar">
           <div class="filter-item">
             <label>Unit</label>
             <select id="dashFilterUnit" onchange="onDashUnitChange()"></select>
@@ -1006,7 +1112,7 @@ table tr:hover td { background: #f8f9fc; }
           <button class="btn-reset" onclick="resetDashFilters()" title="Reset filters">
             <i class="fas fa-undo"></i> Reset
           </button>
-        </div>        
+        </div>
 
         <div id="dashCards" class="cards-grid"></div>
       </div>
@@ -1067,18 +1173,87 @@ table tr:hover td { background: #f8f9fc; }
 
 <!-- ==================== SETTINGS MODAL (Admin only) ==================== -->
 <div class="modal-overlay" id="settingsModal">
-  <div class="modal" style="max-width:800px;">
+  <div class="modal" style="max-width:900px;">
     <div class="modal-header">
-      <h2><i class="fas fa-cog"></i> Score Settings</h2>
+      <h2><i class="fas fa-cog"></i> Settings</h2>
       <button class="modal-close" onclick="closeModal('settingsModal')"><i class="fas fa-times"></i></button>
     </div>
-    <div class="modal-body" id="settingsBody"></div>
-    <div class="modal-footer">
+    <div class="modal-body">
+      <!-- Settings tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab-btn active" id="setTabScoreRules" onclick="switchSettingsTab('scoreRules')">
+          <i class="fas fa-calculator"></i> Score Rules
+        </button>
+        <button class="settings-tab-btn" id="setTabHod" onclick="switchSettingsTab('hod')">
+          <i class="fas fa-user-tie"></i> HOD Assignments
+        </button>
+      </div>
+
+      <!-- Pane: Score Rules -->
+      <div id="setPaneScoreRules" class="settings-pane active">
+        <div id="settingsBody"></div>
+      </div>
+
+      <!-- Pane: HOD Assignments -->
+      <div id="setPaneHod" class="settings-pane">
+        <div class="settings-group" style="border-left-color:#f57c00;">
+          <h4><i class="fas fa-user-tie" style="color:#f57c00;"></i> HOD Assignments</h4>
+          <p style="font-size:12px;color:#666;margin-bottom:12px;line-height:1.5;">
+            Assign one or more units to an email address. That user will be treated as
+            <strong>HOD</strong> for those units and will see all workplaces under them.
+            An email listed here overrides the employee role but <em>not</em> the admin role.
+          </p>
+          <div id="hodAssignmentsList" class="hod-list"></div>
+          <button class="btn btn-primary" id="addHodBtn" onclick="openAddHodDialog()">
+            <i class="fas fa-plus"></i> Add HOD
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" id="settingsFooterScoreRules">
       <button class="btn btn-outline" onclick="reloadSettingsFromFirestore()">
         <i class="fas fa-sync"></i> Reload from Firestore
       </button>
       <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">
-        <i class="fas fa-save"></i> Save Settings
+        <i class="fas fa-save"></i> Save Score Rules
+      </button>
+    </div>
+    <div class="modal-footer" id="settingsFooterHod" style="display:none;">
+      <button class="btn btn-outline" onclick="reloadHodAssignments()">
+        <i class="fas fa-sync"></i> Reload from Firestore
+      </button>
+      <button class="btn btn-primary" id="saveHodBtn" onclick="saveHodAssignments()">
+        <i class="fas fa-save"></i> Save HOD Assignments
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADD / EDIT HOD MODAL ==================== -->
+<div class="modal-overlay" id="hodEditModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-tie" style="color:#f57c00;"></i> <span id="hodEditTitle">Add HOD</span></h2>
+      <button class="modal-close" onclick="closeModal('hodEditModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Email <span class="required">*</span></label>
+        <input type="email" id="hodEditEmail" placeholder="hod@example.com" autocomplete="off">
+      </div>
+      <div class="form-group" style="margin-bottom:6px;">
+        <label>Units <span class="required">*</span></label>
+      </div>
+      <div id="hodUnitRows"></div>
+      <button class="btn btn-outline btn-sm" onclick="addHodUnitRow('')" style="margin-top:4px;">
+        <i class="fas fa-plus"></i> Add another unit
+      </button>
+      <div id="hodEditMsg" class="message"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('hodEditModal')">Cancel</button>
+      <button class="btn btn-primary" id="hodEditSaveBtn" onclick="saveHodRow()">
+        <i class="fas fa-save"></i> Save
       </button>
     </div>
   </div>
@@ -1119,7 +1294,7 @@ table tr:hover td { background: #f8f9fc; }
         <input type="text" id="editProfileDesignation" placeholder="e.g., Executive">
       </div>
 
-      <!-- ===== Danger Zone: Delete User ===== -->
+      <!-- ===== Danger Zone: Delete User (Admin only, hidden for HOD) ===== -->
       <div class="danger-zone" id="deleteUserZone" style="display:none;">
         <h4><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
         <p>
@@ -1279,45 +1454,34 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ---- One-time cleanup: force sign-out of any stale LOCAL session
-        saved before the "Keep me logged in" checkbox fix. ---- */
+/* ---- One-time cleanup: force sign-out of any stale LOCAL session ---- */
 (function forceSignOutOnce() {
   const KEY = 'icd_force_signout_v1';
   try {
     if (!localStorage.getItem(KEY)) {
       localStorage.setItem(KEY, '1');
       auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          try { await auth.signOut(); } catch (e) {}
-        }
+        if (user) { try { await auth.signOut(); } catch (e) {} }
       });
     }
-  } catch (e) { /* localStorage unavailable — skip */ }
+  } catch (e) {}
 })();
 
 /* ============================================================
    CONSTANTS
    ============================================================ */
-const EDIT_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 hours — employee only
-const SETTINGS_DOC_PATH = { collection: 'settings', doc: 'scoreRules' };
-const BATCH_LIMIT = 450; // conservative (Firestore limit is 500)
+const EDIT_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 hours
+const SCORE_RULES_DOC = { collection: 'settings', doc: 'scoreRules' };
+const HOD_ASSIGN_DOC = { collection: 'settings', doc: 'hodAssignments' };
+const BATCH_LIMIT = 450;
 
-/* PDF edition lists (hard-coded) */
 const PDF_HELLO_EDITIONS = [
-  "Hello Sindhudurg",
-  "Hello Ratnagiri",
-  "Hello Satara",
-  "Hello Sangli",
-  "Hello Kolhapur"
+  "Hello Sindhudurg", "Hello Ratnagiri", "Hello Satara", "Hello Sangli", "Hello Kolhapur"
 ];
 const PDF_MAIN_EDITIONS = [
-  "Main Kokan",
-  "Main Satara",
-  "Main Sangli",
-  "Main Kolhapur"
+  "Main Kokan", "Main Satara", "Main Sangli", "Main Kolhapur"
 ];
 
-/* Which job types appear as chips in the Team Log stats row */
 const STATS_CHIPS = [
   { key: 'advt',            label: 'Advt Design' },
   { key: 'paginationAlter', label: 'Page Alter'  },
@@ -1326,15 +1490,12 @@ const STATS_CHIPS = [
   { key: 'pdf',             label: 'PDF Making'  }
 ];
 
-/* Palette used for workplace pie slices (12 distinct colors) */
 const PIE_PALETTE = [
   '#2196f3', '#43a047', '#f57c00', '#e53935',
   '#8e24aa', '#00acc1', '#fdd835', '#6d4c41',
   '#3949ab', '#7cb342', '#d81b60', '#00897b'
 ];
 
-/* Two-column layout: each inner array is one row.
-   A row with a single item spans the full width. */
 const JOB_LAYOUT_ROWS = [
   ['advt', 'pdf'],
   ['paginationAlter', 'paginationFresh'],
@@ -1343,12 +1504,13 @@ const JOB_LAYOUT_ROWS = [
   ['other']
 ];
 
+const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
+
 /* ============================================================
-   SETTINGS FIELD DEFINITIONS
+   SETTINGS FIELD DEFINITIONS (Score rules)
    ============================================================ */
 const SETTINGS_GROUPS = [
-  {
-    key: 'advt', label: 'Advt Design', icon: 'fa-rectangle-ad',
+  { key: 'advt', label: 'Advt Design', icon: 'fa-rectangle-ad',
     fields: [
       { key: 'fullPage',          label: 'Full Page (>1500 cm²)' },
       { key: 'aboveHalf',         label: 'Above Half (750–1500)' },
@@ -1358,30 +1520,22 @@ const SETTINGS_GROUPS = [
       { key: 'sizeB',             label: 'Size B (100–200)' },
       { key: 'sizeC',             label: 'Size C (0–100)' },
       { key: 'brandingMultiplier',label: 'Branding (per cm²)' }
-    ]
-  },
-  {
-    key: 'paginationAlter', label: 'Pagination · Alter', icon: 'fa-pen-to-square',
+    ]},
+  { key: 'paginationAlter', label: 'Pagination · Alter', icon: 'fa-pen-to-square',
     fields: [
       { key: 'perNews',      label: 'Per News Change' },
       { key: 'capThreshold', label: 'Cap Threshold (News > this)' },
       { key: 'capScore',     label: 'Cap Score (flat)' }
-    ]
-  },
-  {
-    key: 'paginationFresh', label: 'Pagination · Fresh', icon: 'fa-file-circle-plus',
-    fields: [
-      { key: 'freshMultiplier', label: 'Fresh Multiplier' }
-    ]
-  },
+    ]},
+  { key: 'paginationFresh', label: 'Pagination · Fresh', icon: 'fa-file-circle-plus',
+    fields: [{ key: 'freshMultiplier', label: 'Fresh Multiplier' }] },
   { key: 'typing',  label: 'Typing',                icon: 'fa-keyboard',  fields: [{ key: 'perWord',         label: 'Per Word' }] },
   { key: 'photo',   label: 'Photo Editing',         icon: 'fa-image',     fields: [{ key: 'perPhoto',        label: 'Per Photo' }] },
   { key: 'epaper',  label: 'Epaper',                icon: 'fa-newspaper', fields: [{ key: 'perPage',         label: 'Per Page' }] },
   { key: 'pdf',     label: 'PDF Making',            icon: 'fa-file-pdf',  fields: [
       { key: 'mainPerPage',  label: 'Main (per page)'  },
       { key: 'helloPerPage', label: 'Hello (per page)' }
-    ]
-  },
+    ]},
   { key: 'graphic', label: 'Graphic / Illustration', icon: 'fa-palette',  fields: [{ key: 'perIllustration', label: 'Per Illustration' }] },
   { key: 'other',   label: 'Other Work',             icon: 'fa-tasks',    fields: [{ key: 'perEntry',        label: 'Per Entry' }] }
 ];
@@ -1508,8 +1662,7 @@ function localNow() {
    ============================================================ */
 const JOB_SCHEMAS = {
   advt: {
-    label: "Advt Design",
-    icon: "fa-rectangle-ad",
+    label: "Advt Design", icon: "fa-rectangle-ad",
     subtitle: "General / Branding advertisements",
     fields: [
       { key: "advtType", label: "Advt Type", type: "select", options: ["General", "Branding"], required: true },
@@ -1520,17 +1673,15 @@ const JOB_SCHEMAS = {
     compute: (p) => { p.areaCm2 = (p.widthCm || 0) * (p.heightCm || 0); return p; }
   },
   paginationAlter: {
-    label: "Pagination · Alter",
-    icon: "fa-pen-to-square",
+    label: "Pagination · Alter", icon: "fa-pen-to-square",
     subtitle: "Alteration of existing pages",
     fields: [
       { key: "pageName",   label: "Page Name",   type: "text",   required: true, placeholder: "e.g., 12092026-LK-KHK-01" },
-      { key: "newsChange", label: "News Change", type: "number", min: 0, required: true }	  
+      { key: "newsChange", label: "News Change", type: "number", min: 0, required: true }
     ]
   },
   paginationFresh: {
-    label: "Pagination · Fresh",
-    icon: "fa-file-circle-plus",
+    label: "Pagination · Fresh", icon: "fa-file-circle-plus",
     subtitle: "Fresh page layout",
     fields: [
       { key: "pageName", label: "Page Name", type: "text", required: true, placeholder: "e.g., 12092026-LK-KHK-01" },
@@ -1551,9 +1702,7 @@ const JOB_SCHEMAS = {
   },
   pdf: {
     label: "PDF Making", icon: "fa-file-pdf", subtitle: "Hello and Main PDF generation",
-    fields: [
-      { key: "editions", type: "editionGrid", required: true }
-    ]
+    fields: [{ key: "editions", type: "editionGrid", required: true }]
   },
   epaper: {
     label: "Epaper", icon: "fa-newspaper", subtitle: "Epaper uploads",
@@ -1577,16 +1726,21 @@ const JOB_SCHEMAS = {
    ============================================================ */
 let currentDocId = null;
 let currentUser  = null;
+let currentRole  = 'employee';   // 'employee' | 'hod' | 'admin'
+let hodScope     = null;         // { email, units: [] } when HOD
+
 let scoreRules   = null;
+let hodAssignments = {};         // map: email(lowercase) -> [units]
+
 let todayEntries  = [];
 let recentEntries = [];
 let unsubToday  = null;
 let unsubRecent = null;
 let unsubSettings = null;
+let unsubHod = null;
 let unsubTeamCumulative = null;
 let unsubMyCumulative = null;
 
-/* Cumulative caches for the score compare bar */
 let myCumulativeTotal = 0;
 let teamCumulativeOthersTotal = 0;
 let teamDocIdsCache = new Set();
@@ -1608,15 +1762,11 @@ const wpPieInstances = {};
 
 let syncingDetails = false;
 
-/* Currently-targeted user for deletion (set when Edit Profile opens) */
 let deletingUserDocId = null;
-
-/* ⭐ Flag to prevent onAuthStateChanged's loadUserDoc() from writing a
-   fallback profile while handleRegister() is mid-flight. Without this,
-   the fallback (which only has uid/email/emailDocId/fullName/role/createdAt)
-   can race the full-profile write and win, leaving birthDate, unit,
-   workplace and designation missing. */
 let registrationInProgress = false;
+
+/* HOD editing state */
+let hodEditOriginalEmail = null;  // null = adding new; else the email being edited
 
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
@@ -1650,12 +1800,7 @@ async function handleLogin() {
   btn.disabled = true;
 
   try {
-    /* ⭐ If a stale session exists (from a prior LOCAL login), sign it out
-       first. setPersistence() is silently ignored when a user is already
-       signed in — this is what caused the "keep me logged in" bug. */
-    if (auth.currentUser) {
-      try { await auth.signOut(); } catch (e) { /* ignore */ }
-    }
+    if (auth.currentUser) { try { await auth.signOut(); } catch (e) {} }
 
     const persistence = keep
       ? firebase.auth.Auth.Persistence.LOCAL
@@ -1698,8 +1843,6 @@ async function handleRegister() {
   btn.innerHTML = '<span class="spinner-inline"></span> Creating...';
   btn.disabled = true;
 
-  /* ⭐ Set the flag BEFORE creating the auth user, so any onAuthStateChanged
-     fired by Firebase during account creation will skip the fallback path. */
   registrationInProgress = true;
 
   try {
@@ -1707,15 +1850,10 @@ async function handleRegister() {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const user = cred.user;
     await user.updateProfile({ displayName: fullName });
-
-    /* Force-refresh the ID token so Firestore's request.auth
-       is guaranteed to be populated before we attempt the write. */
     await user.getIdToken(true);
 
     const docId = emailDocId(email);
 
-    /* ⭐ Write the FULL profile — including birthDate, unit, workplace,
-       designation — with merge:false semantics via set(). */
     await db.collection('users').doc(docId).set({
       uid: email,
       email: email,
@@ -1749,8 +1887,6 @@ async function handleRegister() {
     else if (err.code === 'permission-denied')    msg = 'Firestore permission denied. Check your security rules.';
     showMessage('registerMessage', msg, 'error');
   } finally {
-    /* Keep the flag true briefly so any late-arriving onAuthStateChanged
-       callback still skips the fallback. Then reset. */
     setTimeout(() => { registrationInProgress = false; }, 1500);
     btn.innerHTML = orig;
     btn.disabled = false;
@@ -1780,7 +1916,28 @@ async function handleLogout() {
   detachListeners();
   detachAdminListeners();
   detachSettingsListener();
+  detachHodListener();
   await auth.signOut();
+}
+
+/* ============================================================
+   ROLE RESOLUTION
+   ============================================================ */
+/**
+ * Resolves the effective role for the current user.
+ * Priority:  admin  >  HOD (email in hodAssignments)  >  employee
+ */
+function resolveRole(user, hodMap) {
+  if (!user) return { role: 'employee', scope: null };
+  if ((user.role || '').toLowerCase() === 'admin') {
+    return { role: 'admin', scope: null };
+  }
+  const key = (user.email || '').toLowerCase();
+  const units = (hodMap && hodMap[key]) || [];
+  if (units.length > 0) {
+    return { role: 'hod', scope: { email: user.email, units: units.slice() } };
+  }
+  return { role: 'employee', scope: null };
 }
 
 /* ============================================================
@@ -1789,54 +1946,83 @@ async function handleLogout() {
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentDocId = emailDocId(user.email);
-    await loadUserDoc();
+
+    /* Load user profile and HOD assignments before routing */
+    await Promise.all([
+      loadUserDoc(),
+      loadHodAssignmentsOnce()
+    ]);
+
+    const resolved = resolveRole(currentUser, hodAssignments);
+    currentRole = resolved.role;
+    hodScope    = resolved.scope;
 
     attachSettingsListener();
+    attachHodListener();
 
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
 
+    /* Header */
     const displayName = (currentUser && currentUser.fullName) || user.displayName || user.email || 'User';
     document.getElementById('userDisplay').textContent = displayName;
-	
-	/* Hide the "My Cumulative Score vs Team" card for specific users */
-	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
-	const scoreCard = document.getElementById('scoreCompareCard');
-	if (scoreCard) {
-	  const emailLC = (user.email || '').toLowerCase();
-	  scoreCard.style.display = HIDE_SCORE_EMAILS.includes(emailLC) ? 'none' : '';
-	}
     document.getElementById('userBadgeEmail').textContent = user.email || '';
 
-    const isAdmin = currentUser && currentUser.role === 'admin';
-    const gear = document.getElementById('settingsBtn');
-    gear.style.display = isAdmin ? 'inline-flex' : 'none';
-
-    if (isAdmin) {
-      document.getElementById('employeeView').style.display = 'none';
-      document.getElementById('adminView').style.display = 'block';
-      await initAdminDashboard();
+    /* Role badge */
+    const roleBadge = document.getElementById('headerRoleBadge');
+    roleBadge.className = 'role-badge ' + currentRole;
+    if (currentRole === 'admin') {
+      roleBadge.textContent = 'ADMIN';
+    } else if (currentRole === 'hod') {
+      roleBadge.textContent = 'HOD · ' + (hodScope ? hodScope.units.join(', ') : '');
     } else {
+      roleBadge.textContent = '';
+      roleBadge.style.display = 'none';
+    }
+    if (currentRole !== 'employee') roleBadge.style.display = 'inline-flex';
+
+    /* Gear (admin only) */
+    document.getElementById('settingsBtn').style.display = (currentRole === 'admin') ? 'inline-flex' : 'none';
+
+    /* Route to view */
+    if (currentRole === 'employee') {
       document.getElementById('employeeView').style.display = 'block';
-      document.getElementById('adminView').style.display = 'none';
+      document.getElementById('managementView').style.display = 'none';
+
+      const scoreCard = document.getElementById('scoreCompareCard');
+      const emailLC = (user.email || '').toLowerCase();
+      scoreCard.style.display = HIDE_SCORE_EMAILS.includes(emailLC) ? 'none' : '';
+
       renderAccordion();
       attachListeners();
-	  /* Skip cumulative-score listeners for hidden-score users */
-		const emailLC = (user.email || '').toLowerCase();
-		if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
-		  attachCumulativeListeners();
-		}
+
+      if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
+        attachCumulativeListeners();
+      }
+    } else {
+      /* HOD or Admin — management view */
+      document.getElementById('employeeView').style.display = 'none';
+      document.getElementById('managementView').style.display = 'block';
+
+      await initManagementDashboard();
     }
   } else {
     currentDocId = null;
     currentUser  = null;
+    currentRole  = 'employee';
+    hodScope     = null;
     scoreRules   = null;
+    hodAssignments = {};
+
     document.getElementById('loginContainer').style.display = 'flex';
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('settingsBtn').style.display = 'none';
+    document.getElementById('headerRoleBadge').style.display = 'none';
+
     detachListeners();
     detachAdminListeners();
     detachSettingsListener();
+    detachHodListener();
   }
 });
 
@@ -1847,8 +2033,6 @@ async function loadUserDoc() {
     if (doc.exists) {
       currentUser = doc.data();
     } else {
-      /* ⭐ If a registration is currently in flight, DON'T write a fallback.
-         handleRegister() will write the full profile itself. */
       if (registrationInProgress) {
         currentUser = {
           uid: auth.currentUser.email,
@@ -1877,11 +2061,83 @@ async function loadUserDoc() {
 }
 
 /* ============================================================
-   SETTINGS LISTENER — LIVE FROM FIRESTORE
+   HOD ASSIGNMENTS — LOAD + LIVE LISTENER
+   ============================================================ */
+async function loadHodAssignmentsOnce() {
+  try {
+    const ref = db.collection(HOD_ASSIGN_DOC.collection).doc(HOD_ASSIGN_DOC.doc);
+    const snap = await ref.get();
+    if (snap.exists) {
+      const data = snap.data() || {};
+      hodAssignments = normalizeHodMap(data.assignments || {});
+    } else {
+      hodAssignments = {};
+    }
+  } catch (e) {
+    console.error('loadHodAssignmentsOnce:', e);
+    hodAssignments = {};
+  }
+}
+
+function normalizeHodMap(raw) {
+  const out = {};
+  Object.keys(raw || {}).forEach(k => {
+    const key = String(k).toLowerCase().trim();
+    const units = Array.isArray(raw[k])
+      ? raw[k].map(u => String(u).trim()).filter(Boolean)
+      : [];
+    if (key && units.length > 0) out[key] = units;
+  });
+  return out;
+}
+
+function attachHodListener() {
+  detachHodListener();
+  const ref = db.collection(HOD_ASSIGN_DOC.collection).doc(HOD_ASSIGN_DOC.doc);
+  unsubHod = ref.onSnapshot(
+    (doc) => {
+      if (doc.exists) {
+        hodAssignments = normalizeHodMap((doc.data() || {}).assignments || {});
+      } else {
+        hodAssignments = {};
+      }
+      console.info('✅ HOD assignments synced.', hodAssignments);
+
+      /* Re-resolve role in case admin changed it live */
+      if (currentUser) {
+        const resolved = resolveRole(currentUser, hodAssignments);
+        if (resolved.role !== currentRole) {
+          currentRole = resolved.role;
+          hodScope    = resolved.scope;
+          /* Reload view */
+          if (auth.currentUser) {
+            auth.currentUser.reload().catch(() => {});
+          }
+        } else {
+          hodScope = resolved.scope;
+        }
+      }
+
+      /* If settings modal HOD tab is open, refresh it */
+      const sp = document.getElementById('setPaneHod');
+      if (sp && sp.classList.contains('active')) renderHodAssignmentsList();
+    },
+    (err) => {
+      console.error('hod assignments listener error:', err);
+    }
+  );
+}
+
+function detachHodListener() {
+  if (unsubHod) { unsubHod(); unsubHod = null; }
+}
+
+/* ============================================================
+   SCORE RULES LISTENER (unchanged)
    ============================================================ */
 function attachSettingsListener() {
   detachSettingsListener();
-  const ref = db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc);
+  const ref = db.collection(SCORE_RULES_DOC.collection).doc(SCORE_RULES_DOC.doc);
 
   unsubSettings = ref.onSnapshot(
     (doc) => {
@@ -1912,14 +2168,12 @@ function detachSettingsListener() {
 
 async function loadScoreRules() {
   try {
-    const ref = db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc);
+    const ref = db.collection(SCORE_RULES_DOC.collection).doc(SCORE_RULES_DOC.doc);
     const doc = await ref.get();
     if (doc.exists) {
       scoreRules = doc.data() || {};
-      console.info('✅ Score rules fetched from Firestore.', scoreRules);
     } else {
       scoreRules = null;
-      console.warn('⚠️ settings/scoreRules document does not exist in Firestore.');
     }
   } catch (e) {
     console.error('loadScoreRules:', e);
@@ -1976,7 +2230,7 @@ function computeScore(type, payload) {
 }
 
 /* ============================================================
-   EMPLOYEE: ACCORDION — two-column layout, paired open/close
+   EMPLOYEE: ACCORDION
    ============================================================ */
 function renderAccordion() {
   const container = document.getElementById('jobSections');
@@ -2060,7 +2314,6 @@ function attachAccordionSync() {
 function renderField(f, type, mode, value) {
   const id   = `${mode}-${type}-${f.key}`;
   const req  = f.required ? '<span class="required">*</span>' : '';
-  const help = f.help ? `<span class="help-text">${escapeHtml(f.help)}</span>` : '';
   const v    = (value !== undefined && value !== null) ? value : '';
 
   if (f.type === 'select') {
@@ -2073,12 +2326,11 @@ function renderField(f, type, mode, value) {
             return `<option value="${escapeHtml(o)}" ${sel}>${o ? escapeHtml(o) : '-- none --'}</option>`;
           }).join('')}
         </select>
-        ${help}
       </div>`;
   }
   if (f.type === 'textarea') {
     return `<div class="form-group"><label>${escapeHtml(f.label)} ${req}</label>
-      <textarea id="${id}" ${f.required ? 'required' : ''}>${escapeHtml(v)}</textarea>${help}</div>`;
+      <textarea id="${id}" ${f.required ? 'required' : ''}>${escapeHtml(v)}</textarea></div>`;
   }
   const attrs = [
     f.step        ? `step="${f.step}"` : '',
@@ -2088,7 +2340,7 @@ function renderField(f, type, mode, value) {
     f.required ? 'required' : ''
   ].filter(Boolean).join(' ');
   return `<div class="form-group"><label>${escapeHtml(f.label)} ${req}</label>
-    <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}>${help}</div>`;
+    <input type="${f.type}" id="${id}" value="${escapeHtml(v)}" ${attrs}></div>`;
 }
 
 function renderEditionGrid(f, type, mode, savedEditions) {
@@ -2175,13 +2427,8 @@ function readPdfGridPayload(prefix) {
     const n = parseFloat(el.value);
     const v = isNaN(n) ? 0 : n;
 
-    if (kind === 'hello') {
-      hello[name] = v;
-      helloTotal += v;
-    } else if (kind === 'main') {
-      main[name] = v;
-      mainTotal += v;
-    }
+    if (kind === 'hello') { hello[name] = v; helloTotal += v; }
+    else if (kind === 'main') { main[name] = v; mainTotal += v; }
   });
 
   return { hello, main, helloTotal, mainTotal };
@@ -2192,24 +2439,18 @@ function readPdfGridPayload(prefix) {
    ============================================================ */
 async function submitEntry(type) {
   if (!currentDocId || !currentUser) return;
-  if (!scoreRules) {
-    showToast('Score settings not loaded from Firestore. Cannot save.', 'error');
-    return;
-  }
+  if (!scoreRules) { showToast('Score settings not loaded from Firestore. Cannot save.', 'error'); return; }
 
   const schema = JOB_SCHEMAS[type];
   const payload = {};
-
   const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
 
   if (hasEditionGrid) {
     const gridField = schema.fields.find(f => f.type === 'editionGrid');
     const prefix = `new-${type}-${gridField.key}`;
     const editions = readPdfGridPayload(prefix);
-
     if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
-      showToast('Please enter pages for at least one edition', 'warning');
-      return;
+      showToast('Please enter pages for at least one edition', 'warning'); return;
     }
     payload[gridField.key] = editions;
   } else {
@@ -2219,9 +2460,7 @@ async function submitEntry(type) {
       let v = el.value;
       if (f.type === 'number') v = v === '' ? null : parseFloat(v);
       if (f.required && (v === '' || v === null || v === undefined)) {
-        showToast(`Please fill "${f.label}"`, 'warning');
-        el.focus();
-        return;
+        showToast(`Please fill "${f.label}"`, 'warning'); el.focus(); return;
       }
       payload[f.key] = v;
     }
@@ -2230,14 +2469,10 @@ async function submitEntry(type) {
   if (schema.compute) schema.compute(payload);
 
   const rawScore = computeScore(type, payload);
-  if (rawScore === null) {
-    showToast('Score settings unavailable. Cannot compute score.', 'error');
-    return;
-  }
+  if (rawScore === null) { showToast('Score settings unavailable.', 'error'); return; }
   const score = Math.round(rawScore * 100) / 100;
 
   const occurredDate = new Date();
-
   const sharedBase = {
     uid: auth.currentUser.email,
     emailDocId: currentDocId,
@@ -2256,14 +2491,11 @@ async function submitEntry(type) {
     const topEntryRef  = db.collection('entries').doc(userEntryRef.id);
 
     batch.set(userEntryRef, {
-      uid: sharedBase.uid,
-      type: sharedBase.type,
+      uid: sharedBase.uid, type: sharedBase.type,
       occurredAt: sharedBase.occurredAt,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      payload: sharedBase.payload,
-      score: sharedBase.score
+      payload: sharedBase.payload, score: sharedBase.score
     });
-
     batch.set(topEntryRef, {
       ...sharedBase,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2319,12 +2551,6 @@ function attachListeners() {
       recentEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderRecent();
     }, err => console.error('recent snapshot:', err));
-
-	const emailLC = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
-	if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
-	  attachCumulativeListeners();
-	}
 }
 
 function detachListeners() {
@@ -2335,7 +2561,6 @@ function detachListeners() {
 
   todayEntries  = [];
   recentEntries = [];
-
   myCumulativeTotal = 0;
   teamCumulativeOthersTotal = 0;
   teamDocIdsCache = new Set();
@@ -2351,7 +2576,7 @@ function updateBadges() {
 }
 
 /* ============================================================
-   EMPLOYEE: CUMULATIVE SCORE COMPARE BAR
+   EMPLOYEE: CUMULATIVE SCORE COMPARE
    ============================================================ */
 async function attachCumulativeListeners() {
   if (unsubMyCumulative)   { unsubMyCumulative();   unsubMyCumulative   = null; }
@@ -2524,12 +2749,8 @@ function summarizePdf(p) {
     .map(n => `${stripPrefix(n, 'Main')} ${main[n]}`);
 
   const parts = [];
-  if (helloItems.length > 0) {
-    parts.push(`Hello: ${helloItems.join(', ')} (${ed.helloTotal || 0}p)`);
-  }
-  if (mainItems.length > 0) {
-    parts.push(`Main: ${mainItems.join(', ')} (${ed.mainTotal || 0}p)`);
-  }
+  if (helloItems.length > 0) parts.push(`Hello: ${helloItems.join(', ')} (${ed.helloTotal || 0}p)`);
+  if (mainItems.length > 0)  parts.push(`Main: ${mainItems.join(', ')} (${ed.mainTotal || 0}p)`);
   return parts.length ? parts.join('\n') : '-';
 }
 
@@ -2571,9 +2792,7 @@ function openEditEntry(entryId) {
   document.getElementById('editModalBody').innerHTML = html;
   openModal('editModal');
 
-  if (hasEditionGrid) {
-    attachPdfGridListeners(entry.type, 'edit');
-  }
+  if (hasEditionGrid) attachPdfGridListeners(entry.type, 'edit');
 }
 
 async function saveEditedEntry() {
@@ -2588,10 +2807,8 @@ async function saveEditedEntry() {
     const gridField = schema.fields.find(f => f.type === 'editionGrid');
     const prefix = `edit-${editingEntry.type}-${gridField.key}`;
     const editions = readPdfGridPayload(prefix);
-
     if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
-      showToast('Please enter pages for at least one edition', 'warning');
-      return;
+      showToast('Please enter pages for at least one edition', 'warning'); return;
     }
     payload[gridField.key] = editions;
   } else {
@@ -2609,7 +2826,7 @@ async function saveEditedEntry() {
 
   if (schema.compute) schema.compute(payload);
   const rawScore = computeScore(editingEntry.type, payload);
-  if (rawScore === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
+  if (rawScore === null) { showToast('Score settings unavailable.', 'error'); return; }
   const score = Math.round(rawScore * 100) / 100;
 
   const btn = document.getElementById('editSaveBtn');
@@ -2622,17 +2839,10 @@ async function saveEditedEntry() {
     const userEntryRef = db.collection('users').doc(currentDocId).collection('entries').doc(editingEntry.id);
     const topEntryRef  = db.collection('entries').doc(editingEntry.id);
 
-    batch.update(userEntryRef, {
-      payload, score,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    batch.set(topEntryRef, {
-      payload, score,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    batch.update(userEntryRef, { payload, score, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    batch.set(topEntryRef, { payload, score, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
 
     await batch.commit();
-
     showToast('Entry updated', 'success');
     closeModal('editModal');
     editingEntry = null;
@@ -2663,7 +2873,6 @@ async function confirmDeleteEntry() {
     batch.delete(db.collection('users').doc(currentDocId).collection('entries').doc(deletingEntry.id));
     batch.delete(db.collection('entries').doc(deletingEntry.id));
     await batch.commit();
-
     showToast('Entry deleted', 'success');
     closeModal('deleteEntryModal');
     deletingEntry = null;
@@ -2674,341 +2883,31 @@ async function confirmDeleteEntry() {
 }
 
 /* ============================================================
-   ADMIN: EDIT / DELETE ENTRY (from Team Log)
+   MANAGEMENT: SHARED HELPERS (HOD + Admin)
    ============================================================ */
-function openAdminEditEntry(entryId) {
-  const entry = adminEntriesCache.find(e => e.id === entryId);
-  if (!entry) { showToast('Entry not found', 'error'); return; }
+function isAdmin()  { return currentRole === 'admin'; }
+function isHod()    { return currentRole === 'hod'; }
+function isManagement() { return isAdmin() || isHod(); }
 
-  editingEntry = entry;
-  const schema = JOB_SCHEMAS[entry.type];
-  if (!schema) { showToast('Unknown entry type', 'error'); return; }
-
-  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
-
-  let html = '';
-  if (hasEditionGrid) {
-    const gridField = schema.fields.find(f => f.type === 'editionGrid');
-    html += renderEditionGrid(gridField, entry.type, 'edit', entry.payload[gridField.key]);
-  } else {
-    html += `<div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">`;
-    schema.fields.forEach(f => { html += renderField(f, entry.type, 'edit', entry.payload[f.key]); });
-    html += `</div>`;
-  }
-
-  const occStr = toLocalInputValue(entry.occurredAt);
-  html += `<div class="form-group" style="margin-top:14px;">
-             <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
-             <input type="datetime-local" value="${occStr}" disabled>
-           </div>`;
-
-  html = `<div style="background:#f8f9fc;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#555;border-left:3px solid #4fc3f7;">
-    <i class="fas fa-user"></i> <strong>${escapeHtml(entry.fullName || entry.uid || '-')}</strong>
-    &nbsp;•&nbsp; <i class="fas fa-building"></i> ${escapeHtml(entry.unit || '-')}
-    &nbsp;•&nbsp; <i class="fas fa-map-marker-alt"></i> ${escapeHtml(entry.workplace || '-')}
-  </div>` + html;
-
-  document.getElementById('editModalBody').innerHTML = html;
-  openModal('editModal');
-
-  if (hasEditionGrid) {
-    attachPdfGridListeners(entry.type, 'edit');
-  }
+/** True if a user is within the current HOD's scope */
+function userInHodScope(user) {
+  if (!isHod() || !hodScope) return false;
+  if (!user) return false;
+  if ((user.role || '').toLowerCase() === 'admin') return false;
+  return hodScope.units.includes(user.unit);
 }
 
-async function saveAdminEditedEntry() {
-  if (!editingEntry) return;
-  if (!scoreRules) { showToast('Score settings not loaded from Firestore.', 'error'); return; }
-
-  const entry = editingEntry;
-  const schema = JOB_SCHEMAS[entry.type];
-  const payload = {};
-  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
-
-  if (hasEditionGrid) {
-    const gridField = schema.fields.find(f => f.type === 'editionGrid');
-    const prefix = `edit-${entry.type}-${gridField.key}`;
-    const editions = readPdfGridPayload(prefix);
-
-    if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
-      showToast('Please enter pages for at least one edition', 'warning');
-      return;
-    }
-    payload[gridField.key] = editions;
-  } else {
-    for (const f of schema.fields) {
-      const el = document.getElementById(`edit-${entry.type}-${f.key}`);
-      if (!el) continue;
-      let v = el.value;
-      if (f.type === 'number') v = v === '' ? null : parseFloat(v);
-      if (f.required && (v === '' || v === null || v === undefined)) {
-        showToast(`Please fill "${f.label}"`, 'warning'); el.focus(); return;
-      }
-      payload[f.key] = v;
-    }
-  }
-
-  if (schema.compute) schema.compute(payload);
-  const rawScore = computeScore(entry.type, payload);
-  if (rawScore === null) { showToast('Score settings unavailable. Cannot compute score.', 'error'); return; }
-  const score = Math.round(rawScore * 100) / 100;
-
-  const btn = document.getElementById('editSaveBtn');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
-  btn.disabled = true;
-
-  try {
-    const entryDocId = entry.emailDocId;
-    if (!entryDocId) throw new Error('Missing emailDocId on entry');
-
-    const batch = db.batch();
-    const userEntryRef = db.collection('users').doc(entryDocId).collection('entries').doc(entry.id);
-    const topEntryRef  = db.collection('entries').doc(entry.id);
-
-    batch.update(userEntryRef, {
-      payload, score,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    batch.set(topEntryRef, {
-      payload, score,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    await batch.commit();
-
-    const cachedTop = adminEntriesCache.find(e => e.id === entry.id);
-    if (cachedTop) { cachedTop.payload = payload; cachedTop.score = score; }
-
-    showToast('Entry updated', 'success');
-    closeModal('editModal');
-    editingEntry = null;
-
-    renderDashboard();
-    renderTeamLog();
-  } catch (err) {
-    console.error('admin update:', err);
-    showToast('Update failed: ' + err.message, 'error');
-  } finally {
-    btn.innerHTML = orig;
-    btn.disabled = false;
-  }
-}
-
-function openAdminDeleteEntry(entryId) {
-  const entry = adminEntriesCache.find(e => e.id === entryId);
-  if (!entry) { showToast('Entry not found', 'error'); return; }
-
-  deletingEntry = entry;
-  const label = (JOB_SCHEMAS[entry.type] || {}).label || entry.type;
-  document.getElementById('deleteEntryMsg').innerHTML =
-    `Delete this <strong>${escapeHtml(label)}</strong> entry for <strong>${escapeHtml(entry.fullName || entry.uid || '-')}</strong> from ${fmtTime(entry.occurredAt)}?`;
-  openModal('deleteEntryModal');
-}
-
-async function confirmAdminDeleteEntry() {
-  if (!deletingEntry) return;
-  const entry = deletingEntry;
-  try {
-    const entryDocId = entry.emailDocId;
-    if (!entryDocId) throw new Error('Missing emailDocId on entry');
-
-    const batch = db.batch();
-    batch.delete(db.collection('users').doc(entryDocId).collection('entries').doc(entry.id));
-    batch.delete(db.collection('entries').doc(entry.id));
-    await batch.commit();
-
-    adminEntriesCache = adminEntriesCache.filter(e => e.id !== entry.id);
-
-    showToast('Entry deleted', 'success');
-    closeModal('deleteEntryModal');
-    deletingEntry = null;
-
-    renderDashboard();
-    renderTeamLog();
-  } catch (err) {
-    console.error('admin delete:', err);
-    showToast('Delete failed: ' + err.message, 'error');
-  }
-}
-
-function routeSaveEntry() {
-  const isAdmin = currentUser && currentUser.role === 'admin';
-  const entryOwnerDocId = editingEntry && (editingEntry.emailDocId || editingEntry.uid);
-  if (isAdmin && entryOwnerDocId && entryOwnerDocId !== currentDocId) {
-    return saveAdminEditedEntry();
-  }
-  return saveEditedEntry();
-}
-
-function routeDeleteEntry() {
-  const isAdmin = currentUser && currentUser.role === 'admin';
-  const entryOwnerDocId = deletingEntry && (deletingEntry.emailDocId || deletingEntry.uid);
-  if (isAdmin && entryOwnerDocId && entryOwnerDocId !== currentDocId) {
-    return confirmAdminDeleteEntry();
-  }
-  return confirmDeleteEntry();
+/** True if an entry is within the current HOD's scope */
+function entryInHodScope(entry) {
+  if (!isHod() || !hodScope) return false;
+  if (!entry) return false;
+  return hodScope.units.includes(entry.unit);
 }
 
 /* ============================================================
-   ADMIN: DELETE USER (full wipe)
-   — Deletes: profile doc + all user-subcollection entries +
-     all top-level entries + Firebase Auth account.
-   — Firestore batches are limited to 500 ops → we chunk.
+   MANAGEMENT: INIT
    ============================================================ */
-function openDeleteUserModal() {
-  if (!deletingUserDocId) {
-    showToast('No user selected for deletion.', 'error');
-    return;
-  }
-  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
-  if (!user) { showToast('Employee not found', 'error'); return; }
-
-  document.getElementById('delUserName').textContent  = user.fullName || '(no name)';
-  document.getElementById('delUserEmail').textContent = user.email || '(no email)';
-
-  const input = document.getElementById('deleteUserConfirmInput');
-  input.value = '';
-  const btn = document.getElementById('deleteUserConfirmBtn');
-  btn.disabled = true;
-
-  const msg = document.getElementById('deleteUserMsg');
-  msg.style.display = 'none';
-  msg.className = 'message';
-
-  input.oninput = () => {
-    btn.disabled = (input.value.trim() !== 'DELETE');
-  };
-
-  openModal('deleteUserModal');
-  setTimeout(() => input.focus(), 100);
-}
-
-async function confirmDeleteUser() {
-  if (!deletingUserDocId) return;
-  if (!currentUser || currentUser.role !== 'admin') {
-    showToast('Admin access required', 'warning'); return;
-  }
-
-  const input = document.getElementById('deleteUserConfirmInput');
-  if (input.value.trim() !== 'DELETE') {
-    const msg = document.getElementById('deleteUserMsg');
-    msg.textContent = 'Please type DELETE exactly to confirm.';
-    msg.className = 'message error';
-    return;
-  }
-
-  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
-  if (!user) { showToast('Employee not found', 'error'); return; }
-
-  const docId  = user.emailDocId || user.docId;
-  const email  = user.email || '';
-
-  const btn = document.getElementById('deleteUserConfirmBtn');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Deleting...';
-  btn.disabled = true;
-
-  const msg = document.getElementById('deleteUserMsg');
-  msg.style.display = 'none';
-  msg.className = 'message';
-
-  try {
-    /* ---------- STEP 1: Delete all user-subcollection entries ---------- */
-    const subRef = db.collection('users').doc(docId).collection('entries');
-    await deleteCollection(subRef);
-
-    /* ---------- STEP 2: Delete all top-level entries for this user ---------- */
-    const topRef = db.collection('entries').where('emailDocId', '==', docId);
-    await deleteQuery(topRef);
-
-    /* ---------- STEP 3: Delete the user profile document ---------- */
-    await db.collection('users').doc(docId).delete();
-
-    /* ---------- STEP 4: Delete the Firebase Auth account ----------
-       NOTE: The Firebase client SDK CANNOT delete arbitrary users.
-       Only the currently-signed-in user can call user.delete() on themselves.
-       To delete another user's auth account, you need a Cloud Function
-       using the Admin SDK. We attempt the deletion anyway and, if it fails
-       (which it will for other users), we surface a clear message.
-
-       If you set up a Cloud Function (recommended), call it here via
-       fetch() and it will remove the auth user by uid/email.
-    */
-    let authDeleted = false;
-    try {
-      /* If the target user is somehow the currently logged-in user,
-         this would actually work — but normally it won't. */
-      if (auth.currentUser && auth.currentUser.email &&
-          auth.currentUser.email.toLowerCase() === email.toLowerCase()) {
-        await auth.currentUser.delete();
-        authDeleted = true;
-      }
-    } catch (authErr) {
-      console.warn('Auth delete skipped (client SDK limitation):', authErr);
-    }
-
-    /* ---------- Update local caches ---------- */
-    allUsersCache     = allUsersCache.filter(u => (u.emailDocId || u.docId) !== docId);
-    adminEntriesCache = adminEntriesCache.filter(e => e.emailDocId !== docId);
-
-    /* ---------- Refresh UI ---------- */
-    populateDashUnitSelect();
-    populateDashWorkplaceSelect();
-    populateLogUnitSelect();
-    populateLogWorkplaceSelect();
-    populateLogEmployeeSelect();
-    renderDashboard();
-    renderTeamLog();
-
-    showToast(
-      authDeleted
-        ? 'User, all data, and login account deleted.'
-        : 'User and all data deleted. (Auth account requires Cloud Function — see console note.)',
-      authDeleted ? 'success' : 'warning'
-    );
-
-    closeModal('deleteUserModal');
-    closeModal('editProfileModal');
-    deletingUserDocId = null;
-  } catch (err) {
-    console.error('confirmDeleteUser:', err);
-    msg.textContent = 'Delete failed: ' + err.message;
-    msg.className = 'message error';
-  } finally {
-    btn.innerHTML = orig;
-    btn.disabled = false;
-  }
-}
-
-/* ---------- Helper: delete all docs in a CollectionReference (chunked) ---------- */
-async function deleteCollection(collRef) {
-  while (true) {
-    const snap = await collRef.limit(BATCH_LIMIT).get();
-    if (snap.empty) return;
-    const batch = db.batch();
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    if (snap.size < BATCH_LIMIT) return;
-  }
-}
-
-/* ---------- Helper: delete all docs matching a Query (chunked) ---------- */
-async function deleteQuery(query) {
-  while (true) {
-    const snap = await query.limit(BATCH_LIMIT).get();
-    if (snap.empty) return;
-    const batch = db.batch();
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    if (snap.size < BATCH_LIMIT) return;
-  }
-}
-
-/* ============================================================
-   ADMIN: INITIALIZATION
-   ============================================================ */
-async function initAdminDashboard() {
+async function initManagementDashboard() {
   const t = todayStr();
   document.getElementById('dashFilterFrom').value = t;
   document.getElementById('dashFilterTo').value   = t;
@@ -3064,8 +2963,29 @@ function uniqueSorted(arr) {
   return Array.from(new Set(arr.filter(Boolean))).sort();
 }
 
+/* Get the universe of users the current management user can see */
+function visibleUsersForRole() {
+  if (isAdmin()) {
+    return allUsersCache.filter(u => u.role !== 'admin');
+  }
+  /* HOD */
+  return allUsersCache.filter(u => userInHodScope(u));
+}
+
+/* Get the list of units to show in dropdown */
+function unitOptionsForRole() {
+  if (isAdmin()) {
+    return uniqueSorted(allUsersCache.filter(u => u.role !== 'admin').map(u => u.unit));
+  }
+  /* HOD: only assigned units */
+  return hodScope ? hodScope.units.slice() : [];
+}
+
+/* ============================================================
+   MANAGEMENT: POPULATE FILTER SELECTS
+   ============================================================ */
 function populateDashUnitSelect() {
-  const units = uniqueSorted(allUsersCache.map(u => u.unit));
+  const units = unitOptionsForRole();
   const sel = document.getElementById('dashFilterUnit');
   const prev = sel.value;
   sel.innerHTML = `<option value="">All Units</option>` +
@@ -3075,7 +2995,7 @@ function populateDashUnitSelect() {
 
 function populateDashWorkplaceSelect() {
   const unit = document.getElementById('dashFilterUnit').value;
-  const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
+  const pool = visibleUsersForRole().filter(u => !unit || u.unit === unit);
   const wps  = uniqueSorted(pool.map(u => u.workplace));
   const sel  = document.getElementById('dashFilterWorkplace');
   const prev = sel.value;
@@ -3085,7 +3005,7 @@ function populateDashWorkplaceSelect() {
 }
 
 function populateLogUnitSelect() {
-  const units = uniqueSorted(allUsersCache.map(u => u.unit));
+  const units = unitOptionsForRole();
   const sel = document.getElementById('logFilterUnit');
   const prev = sel.value;
   sel.innerHTML = `<option value="">All Units</option>` +
@@ -3095,7 +3015,7 @@ function populateLogUnitSelect() {
 
 function populateLogWorkplaceSelect() {
   const unit = document.getElementById('logFilterUnit').value;
-  const pool = unit ? allUsersCache.filter(u => u.unit === unit) : allUsersCache;
+  const pool = visibleUsersForRole().filter(u => !unit || u.unit === unit);
   const wps  = uniqueSorted(pool.map(u => u.workplace));
   const sel  = document.getElementById('logFilterWorkplace');
   const prev = sel.value;
@@ -3107,7 +3027,7 @@ function populateLogWorkplaceSelect() {
 function populateLogEmployeeSelect() {
   const unit = document.getElementById('logFilterUnit').value;
   const wp   = document.getElementById('logFilterWorkplace').value;
-  let pool = allUsersCache;
+  let pool = visibleUsersForRole();
   if (unit) pool = pool.filter(u => u.unit === unit);
   if (wp)   pool = pool.filter(u => u.workplace === wp);
   pool = pool.slice().sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
@@ -3162,7 +3082,7 @@ function resetLogFilters() {
   renderTeamLog();
 }
 
-function switchAdminTab(tab) {
+function switchMgmtTab(tab) {
   document.getElementById('tabBtnDashboard').classList.toggle('active', tab === 'dashboard');
   document.getElementById('tabBtnTeamLog').classList.toggle('active', tab === 'teamlog');
   document.getElementById('tabDashboard').classList.toggle('active', tab === 'dashboard');
@@ -3170,14 +3090,13 @@ function switchAdminTab(tab) {
 }
 
 /* ============================================================
-   ADMIN: DASHBOARD
+   MANAGEMENT: DASHBOARD
    ============================================================ */
 function filterUsersByDashFilters() {
   const unit = document.getElementById('dashFilterUnit').value;
   const wp   = document.getElementById('dashFilterWorkplace').value;
 
-  return allUsersCache.filter(u => {
-    if (u.role === 'admin') return false;
+  return visibleUsersForRole().filter(u => {
     if (unit && u.unit !== unit) return false;
     if (wp && u.workplace !== wp) return false;
     return true;
@@ -3201,7 +3120,7 @@ function renderDashboard() {
 }
 
 /* ============================================================
-   ADMIN: WORKPLACE COMPARISON PIE CHARTS
+   MANAGEMENT: WORKPLACE PIES
    ============================================================ */
 function renderWorkplacePies() {
   const grid = document.getElementById('wpPiesGrid');
@@ -3210,13 +3129,13 @@ function renderWorkplacePies() {
   Object.values(wpPieInstances).forEach(c => { try { c.destroy(); } catch(e) {} });
   Object.keys(wpPieInstances).forEach(k => delete wpPieInstances[k]);
 
-  const users = allUsersCache.filter(u => u.role !== 'admin');
+  const users = visibleUsersForRole();
 
   if (users.length === 0) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
       <i class="fas fa-chart-pie"></i>
-      <h3>No employees match the filters</h3>
-      <p>Try adjusting the Unit, Workplace or date range.</p>
+      <h3>No employees in scope</h3>
+      <p>${isHod() ? 'No employees found in your assigned units.' : 'Try adjusting filters.'}</p>
     </div>`;
     return;
   }
@@ -3228,12 +3147,10 @@ function renderWorkplacePies() {
     if (!groups[lc]) {
       groups[lc] = {
         displayLabel: key || '(No Workplace)',
-        subWorkplaces: new Set(),
         employees: []
       };
     }
     groups[lc].employees.push(u);
-    if (u.workplace) groups[lc].subWorkplaces.add(u.workplace);
   });
 
   const groupKeys = Object.keys(groups).sort((a, b) =>
@@ -3299,28 +3216,20 @@ function renderWorkplacePies() {
       data: {
         labels,
         datasets: [{
-          data,
-          backgroundColor: colors,
-          borderColor: '#fff',
-          borderWidth: 2,
-          hoverOffset: 8
+          data, backgroundColor: colors,
+          borderColor: '#fff', borderWidth: 2, hoverOffset: 8
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         layout: { padding: 4 },
         plugins: {
           legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(26,26,46,0.95)',
-            titleColor: '#fff',
-            bodyColor: '#e8ecf1',
-            padding: 10,
-            cornerRadius: 8,
-            displayColors: true,
-            boxWidth: 10,
-            boxHeight: 10,
+            titleColor: '#fff', bodyColor: '#e8ecf1',
+            padding: 10, cornerRadius: 8, displayColors: true,
+            boxWidth: 10, boxHeight: 10,
             callbacks: {
               title: (items) => items[0]?.label || '',
               label: (ctx) => {
@@ -3346,7 +3255,7 @@ function renderWorkplacePies() {
 }
 
 /* ============================================================
-   ADMIN: EMPLOYEE BAR CARDS
+   MANAGEMENT: EMPLOYEE CARDS
    ============================================================ */
 function renderEmployeeCards() {
   const cards   = document.getElementById('dashCards');
@@ -3358,7 +3267,7 @@ function renderEmployeeCards() {
     cards.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
       <i class="fas fa-users"></i>
       <h3>No employees match the filters</h3>
-      <p>Try adjusting the Unit, Workplace or date range.</p>
+      <p>Try adjusting filters.</p>
     </div>`;
     return;
   }
@@ -3378,10 +3287,8 @@ function renderEmployeeCards() {
     const userEntries = filterEntriesByDate(allTimeEntries, fromStr, toStr);
 
     const teamDocIds = new Set(
-      allUsersCache
-        .filter(u => u.role !== 'admin'
-                  && u.unit === user.unit
-                  && u.workplace === user.workplace)
+      visibleUsersForRole()
+        .filter(u => u.unit === user.unit && u.workplace === user.workplace)
         .map(u => u.emailDocId || u.docId)
     );
     const teamEntries = filterEntriesByDate(
@@ -3399,6 +3306,8 @@ function renderEmployeeCards() {
     const cardId = 'card-' + docId.replace(/[^a-zA-Z0-9]/g, '_');
     const initials = (user.fullName || user.email || '?').trim().charAt(0).toUpperCase();
 
+    /* Only admin can delete; HOD can edit profile. */
+    const canEditProfile = true;  // both HOD and Admin
     const card = document.createElement('div');
     card.className = 'emp-card';
     card.innerHTML = `
@@ -3419,9 +3328,9 @@ function renderEmployeeCards() {
       </div>
       <div class="chart-wrap"><canvas id="${cardId}"></canvas></div>
       <div class="emp-card-actions" style="gap:8px;">
-        <button class="btn btn-outline btn-sm" onclick="openEditProfile('${docId}')">
+        ${canEditProfile ? `<button class="btn btn-outline btn-sm" onclick="openEditProfile('${docId}')">
           <i class="fas fa-user-edit"></i> Edit Profile
-        </button>
+        </button>` : ''}
         <button class="btn btn-outline btn-sm" onclick="openDetailLog('${docId}')">
           <i class="fas fa-clipboard-list"></i> Detail Log
         </button>
@@ -3439,28 +3348,21 @@ function renderEmployeeCards() {
       data: {
         labels,
         datasets: [
-          {
-            label: 'User Score',
-            data: userData,
+          { label: 'User Score', data: userData,
             backgroundColor: 'rgba(33,150,243,0.85)',
-            borderColor:     'rgba(33,150,243,1)',
-            borderWidth: 1, borderRadius: 4
-          },
-          {
-            label: 'Team Total (same workplace)',
-            data: teamData,
+            borderColor: 'rgba(33,150,243,1)',
+            borderWidth: 1, borderRadius: 4 },
+          { label: 'Team Total (same workplace)', data: teamData,
             backgroundColor: 'rgba(200,200,200,0.5)',
-            borderColor:     'rgba(150,150,150,0.9)',
-            borderWidth: 1, borderRadius: 4
-          }
+            borderColor: 'rgba(150,150,150,0.9)',
+            borderWidth: 1, borderRadius: 4 }
         ]
       },
       options: {
         indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend:  { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.x}` } }
         },
         scales: {
@@ -3473,13 +3375,18 @@ function renderEmployeeCards() {
 }
 
 /* ============================================================
-   ADMIN: DETAIL LOG (per employee)
+   MANAGEMENT: DETAIL LOG
    ============================================================ */
 function openDetailLog(docId) {
   const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
   if (!user) { showToast('Employee not found', 'error'); return; }
-  detailLogUser = user;
 
+  /* HOD scope check */
+  if (isHod() && !userInHodScope(user)) {
+    showToast('This employee is outside your scope.', 'warning'); return;
+  }
+
+  detailLogUser = user;
   document.getElementById('detailLogTitle').textContent = `Detail Log — ${user.fullName || user.email}`;
 
   const jobSel = document.getElementById('detailFilterJob');
@@ -3558,7 +3465,7 @@ function renderDetailLog() {
 }
 
 /* ============================================================
-   ADMIN: TEAM LOG
+   MANAGEMENT: TEAM LOG
    ============================================================ */
 function renderTeamLog() {
   const unit = document.getElementById('logFilterUnit').value;
@@ -3572,8 +3479,8 @@ function renderTeamLog() {
   const empMatch  = (u) => !emp  || (u.emailDocId || u.docId) === emp;
 
   const allowedDocIds = new Set(
-    allUsersCache
-      .filter(u => u.role !== 'admin' && unitMatch(u) && wpMatch(u) && empMatch(u))
+    visibleUsersForRole()
+      .filter(u => unitMatch(u) && wpMatch(u) && empMatch(u))
       .map(u => u.emailDocId || u.docId)
   );
 
@@ -3604,11 +3511,7 @@ function renderTeamLogStats(rows) {
 
   const sums = {};
   STATS_CHIPS.forEach(c => { sums[c.key] = 0; });
-
-  rows.forEach(e => {
-    if (sums[e.type] === undefined) return;
-    sums[e.type] += (e.score || 0);
-  });
+  rows.forEach(e => { if (sums[e.type] !== undefined) sums[e.type] += (e.score || 0); });
 
   let html = '';
   STATS_CHIPS.forEach(c => {
@@ -3654,6 +3557,7 @@ function renderTeamLogRows() {
     const detail = summarizePayload(e.type, e.payload);
     const scoreVal = (e.score === null || e.score === undefined) ? 0 : e.score;
 
+    /* Both HOD and Admin can edit/delete in management view */
     const actionsHtml = `<div style="display:flex;gap:4px;justify-content:center;">
          <button class="row-btn edit" onclick="openAdminEditEntry('${e.id}')" title="Edit">
            <i class="fas fa-edit"></i>
@@ -3693,32 +3597,364 @@ function teamLogLoadMore() {
 }
 
 /* ============================================================
-   SETTINGS (ADMIN)
+   MANAGEMENT: EDIT / DELETE ENTRY
    ============================================================ */
+function openAdminEditEntry(entryId) {
+  const entry = adminEntriesCache.find(e => e.id === entryId);
+  if (!entry) { showToast('Entry not found', 'error'); return; }
+
+  /* HOD scope check */
+  if (isHod() && !entryInHodScope(entry)) {
+    showToast('This entry is outside your scope.', 'warning'); return;
+  }
+
+  editingEntry = entry;
+  const schema = JOB_SCHEMAS[entry.type];
+  if (!schema) { showToast('Unknown entry type', 'error'); return; }
+
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+  let html = '';
+  if (hasEditionGrid) {
+    const gridField = schema.fields.find(f => f.type === 'editionGrid');
+    html += renderEditionGrid(gridField, entry.type, 'edit', entry.payload[gridField.key]);
+  } else {
+    html += `<div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">`;
+    schema.fields.forEach(f => { html += renderField(f, entry.type, 'edit', entry.payload[f.key]); });
+    html += `</div>`;
+  }
+
+  const occStr = toLocalInputValue(entry.occurredAt);
+  html += `<div class="form-group" style="margin-top:14px;">
+             <label>Date &amp; Time <small style="color:#888;font-weight:400;">(locked)</small></label>
+             <input type="datetime-local" value="${occStr}" disabled>
+           </div>`;
+
+  html = `<div style="background:#f8f9fc;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#555;border-left:3px solid #4fc3f7;">
+    <i class="fas fa-user"></i> <strong>${escapeHtml(entry.fullName || entry.uid || '-')}</strong>
+    &nbsp;•&nbsp; <i class="fas fa-building"></i> ${escapeHtml(entry.unit || '-')}
+    &nbsp;•&nbsp; <i class="fas fa-map-marker-alt"></i> ${escapeHtml(entry.workplace || '-')}
+  </div>` + html;
+
+  document.getElementById('editModalBody').innerHTML = html;
+  openModal('editModal');
+
+  if (hasEditionGrid) attachPdfGridListeners(entry.type, 'edit');
+}
+
+async function saveAdminEditedEntry() {
+  if (!editingEntry) return;
+  if (!scoreRules) { showToast('Score settings not loaded from Firestore.', 'error'); return; }
+
+  const entry = editingEntry;
+
+  /* HOD scope check */
+  if (isHod() && !entryInHodScope(entry)) {
+    showToast('This entry is outside your scope.', 'warning'); return;
+  }
+
+  const schema = JOB_SCHEMAS[entry.type];
+  const payload = {};
+  const hasEditionGrid = schema.fields.some(f => f.type === 'editionGrid');
+
+  if (hasEditionGrid) {
+    const gridField = schema.fields.find(f => f.type === 'editionGrid');
+    const prefix = `edit-${entry.type}-${gridField.key}`;
+    const editions = readPdfGridPayload(prefix);
+    if (editions.helloTotal <= 0 && editions.mainTotal <= 0) {
+      showToast('Please enter pages for at least one edition', 'warning'); return;
+    }
+    payload[gridField.key] = editions;
+  } else {
+    for (const f of schema.fields) {
+      const el = document.getElementById(`edit-${entry.type}-${f.key}`);
+      if (!el) continue;
+      let v = el.value;
+      if (f.type === 'number') v = v === '' ? null : parseFloat(v);
+      if (f.required && (v === '' || v === null || v === undefined)) {
+        showToast(`Please fill "${f.label}"`, 'warning'); el.focus(); return;
+      }
+      payload[f.key] = v;
+    }
+  }
+
+  if (schema.compute) schema.compute(payload);
+  const rawScore = computeScore(entry.type, payload);
+  if (rawScore === null) { showToast('Score settings unavailable.', 'error'); return; }
+  const score = Math.round(rawScore * 100) / 100;
+
+  const btn = document.getElementById('editSaveBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
+  btn.disabled = true;
+
+  try {
+    const entryDocId = entry.emailDocId;
+    if (!entryDocId) throw new Error('Missing emailDocId on entry');
+
+    const batch = db.batch();
+    const userEntryRef = db.collection('users').doc(entryDocId).collection('entries').doc(entry.id);
+    const topEntryRef  = db.collection('entries').doc(entry.id);
+
+    batch.update(userEntryRef, { payload, score, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    batch.set(topEntryRef, { payload, score, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+    await batch.commit();
+
+    const cachedTop = adminEntriesCache.find(e => e.id === entry.id);
+    if (cachedTop) { cachedTop.payload = payload; cachedTop.score = score; }
+
+    showToast('Entry updated', 'success');
+    closeModal('editModal');
+    editingEntry = null;
+
+    renderDashboard();
+    renderTeamLog();
+  } catch (err) {
+    console.error('admin update:', err);
+    showToast('Update failed: ' + err.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+function openAdminDeleteEntry(entryId) {
+  const entry = adminEntriesCache.find(e => e.id === entryId);
+  if (!entry) { showToast('Entry not found', 'error'); return; }
+
+  if (isHod() && !entryInHodScope(entry)) {
+    showToast('This entry is outside your scope.', 'warning'); return;
+  }
+
+  deletingEntry = entry;
+  const label = (JOB_SCHEMAS[entry.type] || {}).label || entry.type;
+  document.getElementById('deleteEntryMsg').innerHTML =
+    `Delete this <strong>${escapeHtml(label)}</strong> entry for <strong>${escapeHtml(entry.fullName || entry.uid || '-')}</strong> from ${fmtTime(entry.occurredAt)}?`;
+  openModal('deleteEntryModal');
+}
+
+async function confirmAdminDeleteEntry() {
+  if (!deletingEntry) return;
+  const entry = deletingEntry;
+
+  if (isHod() && !entryInHodScope(entry)) {
+    showToast('This entry is outside your scope.', 'warning'); return;
+  }
+
+  try {
+    const entryDocId = entry.emailDocId;
+    if (!entryDocId) throw new Error('Missing emailDocId on entry');
+
+    const batch = db.batch();
+    batch.delete(db.collection('users').doc(entryDocId).collection('entries').doc(entry.id));
+    batch.delete(db.collection('entries').doc(entry.id));
+    await batch.commit();
+
+    adminEntriesCache = adminEntriesCache.filter(e => e.id !== entry.id);
+
+    showToast('Entry deleted', 'success');
+    closeModal('deleteEntryModal');
+    deletingEntry = null;
+
+    renderDashboard();
+    renderTeamLog();
+  } catch (err) {
+    console.error('admin delete:', err);
+    showToast('Delete failed: ' + err.message, 'error');
+  }
+}
+
+function routeSaveEntry() {
+  const entryOwnerDocId = editingEntry && (editingEntry.emailDocId || editingEntry.uid);
+  if (isManagement() && entryOwnerDocId && entryOwnerDocId !== currentDocId) {
+    return saveAdminEditedEntry();
+  }
+  return saveEditedEntry();
+}
+
+function routeDeleteEntry() {
+  const entryOwnerDocId = deletingEntry && (deletingEntry.emailDocId || deletingEntry.uid);
+  if (isManagement() && entryOwnerDocId && entryOwnerDocId !== currentDocId) {
+    return confirmAdminDeleteEntry();
+  }
+  return confirmDeleteEntry();
+}
+
+/* ============================================================
+   MANAGEMENT: DELETE USER (Admin only)
+   ============================================================ */
+function openDeleteUserModal() {
+  if (!isAdmin()) { showToast('Admin access required', 'warning'); return; }
+  if (!deletingUserDocId) { showToast('No user selected for deletion.', 'error'); return; }
+
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+
+  document.getElementById('delUserName').textContent  = user.fullName || '(no name)';
+  document.getElementById('delUserEmail').textContent = user.email || '(no email)';
+
+  const input = document.getElementById('deleteUserConfirmInput');
+  input.value = '';
+  const btn = document.getElementById('deleteUserConfirmBtn');
+  btn.disabled = true;
+
+  const msg = document.getElementById('deleteUserMsg');
+  msg.style.display = 'none';
+  msg.className = 'message';
+
+  input.oninput = () => { btn.disabled = (input.value.trim() !== 'DELETE'); };
+
+  openModal('deleteUserModal');
+  setTimeout(() => input.focus(), 100);
+}
+
+async function confirmDeleteUser() {
+  if (!isAdmin()) { showToast('Admin access required', 'warning'); return; }
+  if (!deletingUserDocId) return;
+
+  const input = document.getElementById('deleteUserConfirmInput');
+  if (input.value.trim() !== 'DELETE') {
+    const msg = document.getElementById('deleteUserMsg');
+    msg.textContent = 'Please type DELETE exactly to confirm.';
+    msg.className = 'message error';
+    return;
+  }
+
+  const user = allUsersCache.find(u => (u.emailDocId || u.docId) === deletingUserDocId);
+  if (!user) { showToast('Employee not found', 'error'); return; }
+
+  const docId  = user.emailDocId || user.docId;
+  const email  = user.email || '';
+
+  const btn = document.getElementById('deleteUserConfirmBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Deleting...';
+  btn.disabled = true;
+
+  const msg = document.getElementById('deleteUserMsg');
+  msg.style.display = 'none';
+  msg.className = 'message';
+
+  try {
+    const subRef = db.collection('users').doc(docId).collection('entries');
+    await deleteCollection(subRef);
+
+    const topRef = db.collection('entries').where('emailDocId', '==', docId);
+    await deleteQuery(topRef);
+
+    await db.collection('users').doc(docId).delete();
+
+    let authDeleted = false;
+    try {
+      if (auth.currentUser && auth.currentUser.email &&
+          auth.currentUser.email.toLowerCase() === email.toLowerCase()) {
+        await auth.currentUser.delete();
+        authDeleted = true;
+      }
+    } catch (authErr) {
+      console.warn('Auth delete skipped (client SDK limitation):', authErr);
+    }
+
+    allUsersCache     = allUsersCache.filter(u => (u.emailDocId || u.docId) !== docId);
+    adminEntriesCache = adminEntriesCache.filter(e => e.emailDocId !== docId);
+
+    populateDashUnitSelect();
+    populateDashWorkplaceSelect();
+    populateLogUnitSelect();
+    populateLogWorkplaceSelect();
+    populateLogEmployeeSelect();
+    renderDashboard();
+    renderTeamLog();
+
+    showToast(
+      authDeleted
+        ? 'User, all data, and login account deleted.'
+        : 'User and all data deleted. (Auth account requires Cloud Function.)',
+      authDeleted ? 'success' : 'warning'
+    );
+
+    closeModal('deleteUserModal');
+    closeModal('editProfileModal');
+    deletingUserDocId = null;
+  } catch (err) {
+    console.error('confirmDeleteUser:', err);
+    msg.textContent = 'Delete failed: ' + err.message;
+    msg.className = 'message error';
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+async function deleteCollection(collRef) {
+  while (true) {
+    const snap = await collRef.limit(BATCH_LIMIT).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    if (snap.size < BATCH_LIMIT) return;
+  }
+}
+
+async function deleteQuery(query) {
+  while (true) {
+    const snap = await query.limit(BATCH_LIMIT).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    if (snap.size < BATCH_LIMIT) return;
+  }
+}
+
+/* ============================================================
+   SETTINGS MODAL — TABS
+   ============================================================ */
+function switchSettingsTab(tab) {
+  const isScore = tab === 'scoreRules';
+  document.getElementById('setTabScoreRules').classList.toggle('active', isScore);
+  document.getElementById('setTabHod').classList.toggle('active', !isScore);
+  document.getElementById('setPaneScoreRules').classList.toggle('active', isScore);
+  document.getElementById('setPaneHod').classList.toggle('active', !isScore);
+  document.getElementById('settingsFooterScoreRules').style.display = isScore ? 'flex' : 'none';
+  document.getElementById('settingsFooterHod').style.display       = isScore ? 'none' : 'flex';
+
+  if (!isScore) renderHodAssignmentsList();
+}
+
 function openSettings() {
-  if (!currentUser || currentUser.role !== 'admin') { showToast('Admin access required', 'warning'); return; }
+  if (!isAdmin()) { showToast('Admin access required', 'warning'); return; }
+
+  /* Reset to score tab */
+  switchSettingsTab('scoreRules');
   renderSettingsForm();
+  renderHodAssignmentsList();
   openModal('settingsModal');
 
   loadScoreRules().then(() => {
     const modal = document.getElementById('settingsModal');
     if (modal && modal.classList.contains('active')) renderSettingsForm();
   });
+
+  loadHodAssignmentsOnce().then(() => {
+    const modal = document.getElementById('settingsModal');
+    if (modal && modal.classList.contains('active')) renderHodAssignmentsList();
+  });
 }
 
+/* ============================================================
+   SCORE RULES RENDERING
+   ============================================================ */
 function renderSettingsForm() {
   const body = document.getElementById('settingsBody');
   if (!scoreRules) {
     body.innerHTML = `<div class="empty-state">
       <i class="fas fa-exclamation-triangle" style="color:#f57c00;"></i>
       <h3>No settings document found in Firestore</h3>
-      <p>settings/scoreRules does not exist yet.</p>
-      <p style="margin-top:8px;font-size:12px;">
-        Please fill the form below and click Save. This will create the
-        document with the values you enter.
-      </p>
-    </div>
-    ${renderEmptySettingsForm()}`;
+      <p>settings/scoreRules does not exist yet. Fill the form below and Save.</p>
+    </div>${renderEmptySettingsForm()}`;
     return;
   }
   body.innerHTML = renderFilledSettingsForm(scoreRules);
@@ -3732,8 +3968,7 @@ function renderFilledSettingsForm(rules) {
         <h4><i class="fas ${g.icon}"></i> ${escapeHtml(g.label)}</h4>
         <div class="settings-fields">
           ${g.fields.map(f => {
-            const v = (rules[g.key] && rules[g.key][f.key] !== undefined)
-                      ? rules[g.key][f.key] : '';
+            const v = (rules[g.key] && rules[g.key][f.key] !== undefined) ? rules[g.key][f.key] : '';
             return `
               <div class="form-group">
                 <label>${escapeHtml(f.label)}</label>
@@ -3757,8 +3992,7 @@ function renderEmptySettingsForm() {
             <div class="form-group">
               <label>${escapeHtml(f.label)}</label>
               <input type="number" step="any" id="setting-${g.key}-${f.key}" value="0">
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>
       </div>`;
   }
@@ -3768,12 +4002,12 @@ function renderEmptySettingsForm() {
 async function reloadSettingsFromFirestore() {
   await loadScoreRules();
   renderSettingsForm();
-  showToast(scoreRules ? 'Settings reloaded from Firestore.' : 'Still no settings in Firestore.',
+  showToast(scoreRules ? 'Score rules reloaded.' : 'No score rules in Firestore.',
             scoreRules ? 'success' : 'warning');
 }
 
 async function saveSettings() {
-  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!isAdmin()) return;
 
   const btn  = document.getElementById('saveSettingsBtn');
   const orig = btn.innerHTML;
@@ -3790,16 +4024,14 @@ async function saveSettings() {
         newRules[g.key][f.key] = isNaN(n) ? 0 : n;
       }
     }
-    await db.collection(SETTINGS_DOC_PATH.collection).doc(SETTINGS_DOC_PATH.doc).set({
+    await db.collection(SCORE_RULES_DOC.collection).doc(SCORE_RULES_DOC.doc).set({
       ...newRules,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentDocId
     });
 
     await loadScoreRules();
-
-    showToast('Settings saved to Firestore!', 'success');
-    closeModal('settingsModal');
+    showToast('Score rules saved!', 'success');
   } catch (err) {
     console.error('saveSettings:', err);
     showToast('Save failed: ' + err.message, 'error');
@@ -3810,7 +4042,199 @@ async function saveSettings() {
 }
 
 /* ============================================================
-   ADMIN: EDIT PROFILE
+   HOD ASSIGNMENTS — SETTINGS TAB
+   ============================================================ */
+function renderHodAssignmentsList() {
+  const container = document.getElementById('hodAssignmentsList');
+  if (!container) return;
+
+  const entries = Object.keys(hodAssignments).sort();
+
+  if (entries.length === 0) {
+    container.innerHTML = `<div class="hod-empty">
+      <i class="fas fa-user-tie" style="font-size:22px;color:#ddd;display:block;margin-bottom:6px;"></i>
+      No HODs assigned yet. Click <strong>Add HOD</strong> to create one.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = entries.map(email => {
+    const units = hodAssignments[email] || [];
+    const chips = units.map(u => `<span class="unit-chip">${escapeHtml(u)}</span>`).join('');
+    return `
+      <div class="hod-row">
+        <div class="hod-email">${escapeHtml(email)}</div>
+        <div class="hod-units">${chips || '<em style="color:#bbb;font-size:12px;">No units</em>'}</div>
+        <div class="hod-actions">
+          <button class="row-btn edit" title="Edit" onclick="openEditHodDialog('${escapeHtml(email)}')">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="row-btn delete" title="Remove" onclick="removeHodRow('${escapeHtml(email)}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openAddHodDialog() {
+  if (!isAdmin()) return;
+  hodEditOriginalEmail = null;
+  document.getElementById('hodEditTitle').textContent = 'Add HOD';
+  document.getElementById('hodEditEmail').value = '';
+  document.getElementById('hodEditEmail').disabled = false;
+  document.getElementById('hodUnitRows').innerHTML = '';
+  addHodUnitRow('');
+  const msg = document.getElementById('hodEditMsg'); msg.style.display = 'none';
+  openModal('hodEditModal');
+  setTimeout(() => document.getElementById('hodEditEmail').focus(), 100);
+}
+
+function openEditHodDialog(email) {
+  if (!isAdmin()) return;
+  const units = hodAssignments[email] || [];
+  hodEditOriginalEmail = email;
+  document.getElementById('hodEditTitle').textContent = 'Edit HOD';
+  document.getElementById('hodEditEmail').value = email;
+  document.getElementById('hodEditEmail').disabled = true;
+  document.getElementById('hodUnitRows').innerHTML = '';
+  if (units.length === 0) addHodUnitRow('');
+  else units.forEach(u => addHodUnitRow(u));
+  const msg = document.getElementById('hodEditMsg'); msg.style.display = 'none';
+  openModal('hodEditModal');
+}
+
+function addHodUnitRow(value) {
+  const rows = document.getElementById('hodUnitRows');
+  const row = document.createElement('div');
+  row.className = 'unit-row';
+  row.innerHTML = `
+    <input type="text" placeholder="e.g., Pune" value="${escapeHtml(value)}">
+    <button type="button" class="remove-unit-btn" title="Remove">
+      <i class="fas fa-times"></i>
+    </button>`;
+  row.querySelector('.remove-unit-btn').addEventListener('click', () => {
+    /* Keep at least 1 row */
+    if (rows.children.length <= 1) {
+      row.querySelector('input').value = '';
+    } else {
+      row.remove();
+    }
+  });
+  rows.appendChild(row);
+}
+
+function collectHodUnitValues() {
+  const inputs = document.querySelectorAll('#hodUnitRows .unit-row input');
+  const out = [];
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if (v) out.push(v);
+  });
+  /* Deduplicate (case-insensitive) but preserve first-seen display case */
+  const seen = new Set();
+  const result = [];
+  out.forEach(u => {
+    const k = u.toLowerCase();
+    if (!seen.has(k)) { seen.add(k); result.push(u); }
+  });
+  return result;
+}
+
+function saveHodRow() {
+  if (!isAdmin()) return;
+
+  const emailInput = document.getElementById('hodEditEmail');
+  const emailRaw = emailInput.value.trim().toLowerCase();
+  const msg = document.getElementById('hodEditMsg');
+
+  if (!emailRaw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+    msg.textContent = 'Please enter a valid email address.';
+    msg.className = 'message error';
+    return;
+  }
+
+  const units = collectHodUnitValues();
+  if (units.length === 0) {
+    msg.textContent = 'Please enter at least one unit.';
+    msg.className = 'message error';
+    return;
+  }
+
+  /* Duplicate check for new entries */
+  if (!hodEditOriginalEmail && hodAssignments[emailRaw]) {
+    msg.textContent = 'This email already has HOD assignment. Edit it instead.';
+    msg.className = 'message error';
+    return;
+  }
+
+  /* Update local map */
+  if (hodEditOriginalEmail && hodEditOriginalEmail !== emailRaw) {
+    delete hodAssignments[hodEditOriginalEmail];
+  }
+  hodAssignments[emailRaw] = units;
+
+  renderHodAssignmentsList();
+  closeModal('hodEditModal');
+  showToast('HOD added to list. Click "Save HOD Assignments" to persist.', 'info');
+}
+
+function removeHodRow(email) {
+  if (!isAdmin()) return;
+  if (!confirm(`Remove HOD assignment for ${email}?`)) return;
+  delete hodAssignments[email];
+  renderHodAssignmentsList();
+  showToast('HOD removed from list. Click "Save HOD Assignments" to persist.', 'info');
+}
+
+async function reloadHodAssignments() {
+  if (!isAdmin()) return;
+  await loadHodAssignmentsOnce();
+  renderHodAssignmentsList();
+  showToast('HOD assignments reloaded.', 'success');
+}
+
+async function saveHodAssignments() {
+  if (!isAdmin()) return;
+
+  const btn  = document.getElementById('saveHodBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
+  btn.disabled  = true;
+
+  try {
+    /* Deep-normalize before write */
+    const cleaned = {};
+    Object.keys(hodAssignments).forEach(k => {
+      const key = String(k).toLowerCase().trim();
+      const units = (hodAssignments[k] || [])
+        .map(u => String(u).trim())
+        .filter(Boolean);
+      if (key && units.length > 0) cleaned[key] = units;
+    });
+
+    await db.collection(HOD_ASSIGN_DOC.collection).doc(HOD_ASSIGN_DOC.doc).set({
+      assignments: cleaned,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentDocId
+    });
+
+    await loadHodAssignmentsOnce();
+    renderHodAssignmentsList();
+
+    showToast('HOD assignments saved!', 'success');
+    closeModal('settingsModal');
+  } catch (err) {
+    console.error('saveHodAssignments:', err);
+    showToast('Save failed: ' + err.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+}
+
+/* ============================================================
+   EDIT PROFILE
    ============================================================ */
 let editingProfileDocId = null;
 
@@ -3818,8 +4242,13 @@ function openEditProfile(docId) {
   const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
   if (!user) { showToast('Employee not found', 'error'); return; }
 
+  /* HOD scope check */
+  if (isHod() && !userInHodScope(user)) {
+    showToast('This employee is outside your scope.', 'warning'); return;
+  }
+
   editingProfileDocId = docId;
-  deletingUserDocId   = docId;   /* used by Delete User flow */
+  deletingUserDocId   = docId;
 
   document.getElementById('editProfileEmail').value       = user.email || '';
   document.getElementById('editProfileFullName').value    = user.fullName || '';
@@ -3832,20 +4261,17 @@ function openEditProfile(docId) {
   msg.style.display = 'none';
   msg.className = 'message';
 
-  /* Show the Delete User danger zone only for admins (always true here)
-     and never for the admin's own account. */
+  /* Danger zone: admin only, and not for self */
   const dz = document.getElementById('deleteUserZone');
   const isSelf = (docId === currentDocId);
-  dz.style.display = isSelf ? 'none' : 'block';
+  dz.style.display = (isAdmin() && !isSelf) ? 'block' : 'none';
 
   openModal('editProfileModal');
 }
 
 async function saveEditProfile() {
   if (!editingProfileDocId) return;
-  if (!currentUser || currentUser.role !== 'admin') {
-    showToast('Admin access required', 'warning'); return;
-  }
+  if (!isManagement()) { showToast('Access denied', 'warning'); return; }
 
   const fullName    = document.getElementById('editProfileFullName').value.trim();
   const birthDate   = document.getElementById('editProfileBirthDate').value;
@@ -3861,6 +4287,15 @@ async function saveEditProfile() {
     return;
   }
 
+  /* HOD scope: new unit must be within scope */
+  if (isHod()) {
+    if (!hodScope || !hodScope.units.includes(unit)) {
+      msg.textContent = 'You cannot assign a unit outside your scope.';
+      msg.className = 'message error';
+      return;
+    }
+  }
+
   const btn  = document.getElementById('editProfileSaveBtn');
   const orig = btn.innerHTML;
   btn.innerHTML = '<span class="spinner-inline" style="border-top-color:#fff;"></span> Saving...';
@@ -3868,11 +4303,7 @@ async function saveEditProfile() {
 
   try {
     await db.collection('users').doc(editingProfileDocId).set({
-      fullName,
-      birthDate,
-      unit,
-      workplace,
-      designation,
+      fullName, birthDate, unit, workplace, designation,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentDocId
     }, { merge: true });
@@ -3886,6 +4317,7 @@ async function saveEditProfile() {
       u.designation = designation;
     }
 
+    /* Propagate to entries */
     try {
       const entriesSnap = await db.collection('entries')
         .where('emailDocId', '==', editingProfileDocId)
@@ -3924,6 +4356,7 @@ async function saveEditProfile() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeModal('settingsModal');
+    closeModal('hodEditModal');
     closeModal('editModal');
     closeModal('deleteEntryModal');
     closeModal('detailLogModal');
@@ -3937,7 +4370,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — full profile write on register + edit-profile birth date fix.');
+console.log('✅ ICD Work Log — HOD support enabled (email→units via settings/hodAssignments).');
 </script>
 </body>
 </html>
