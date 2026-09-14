@@ -1752,6 +1752,14 @@ auth.onAuthStateChanged(async (user) => {
 
     const displayName = (currentUser && currentUser.fullName) || user.displayName || user.email || 'User';
     document.getElementById('userDisplay').textContent = displayName;
+	
+	/* Hide the "My Cumulative Score vs Team" card for specific users */
+	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
+	const scoreCard = document.getElementById('scoreCompareCard');
+	if (scoreCard) {
+	  const emailLC = (user.email || '').toLowerCase();
+	  scoreCard.style.display = HIDE_SCORE_EMAILS.includes(emailLC) ? 'none' : '';
+	}
     document.getElementById('userBadgeEmail').textContent = user.email || '';
 
     const isAdmin = currentUser && currentUser.role === 'admin';
@@ -1767,6 +1775,11 @@ auth.onAuthStateChanged(async (user) => {
       document.getElementById('adminView').style.display = 'none';
       renderAccordion();
       attachListeners();
+	  /* Skip cumulative-score listeners for hidden-score users */
+		const emailLC = (user.email || '').toLowerCase();
+		if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
+		  attachCumulativeListeners();
+		}
     }
   } else {
     currentDocId = null;
@@ -2249,7 +2262,11 @@ function attachListeners() {
       renderRecent();
     }, err => console.error('recent snapshot:', err));
 
-  attachCumulativeListeners();
+	const emailLC = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
+	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
+	if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
+	  attachCumulativeListeners();
+	}
 }
 
 function detachListeners() {
