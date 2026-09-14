@@ -1103,6 +1103,10 @@ table tr:hover td { background: #f8f9fc; }
         <input type="text" id="editProfileFullName" placeholder="Full name">
       </div>
       <div class="form-group">
+        <label>Birth Date <span class="required">*</span></label>
+        <input type="date" id="editProfileBirthDate">
+      </div>
+      <div class="form-group">
         <label>Unit <span class="required">*</span></label>
         <input type="text" id="editProfileUnit" placeholder="e.g., Kolhapur">
       </div>
@@ -1274,6 +1278,22 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+/* ---- One-time cleanup: force sign-out of any stale LOCAL session
+        saved before the "Keep me logged in" checkbox fix. ---- */
+(function forceSignOutOnce() {
+  const KEY = 'icd_force_signout_v1';
+  try {
+    if (!localStorage.getItem(KEY)) {
+      localStorage.setItem(KEY, '1');
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try { await auth.signOut(); } catch (e) {}
+        }
+      });
+    }
+  } catch (e) { /* localStorage unavailable — skip */ }
+})();
 
 /* ============================================================
    CONSTANTS
@@ -1591,6 +1611,13 @@ let syncingDetails = false;
 /* Currently-targeted user for deletion (set when Edit Profile opens) */
 let deletingUserDocId = null;
 
+/* ⭐ Flag to prevent onAuthStateChanged's loadUserDoc() from writing a
+   fallback profile while handleRegister() is mid-flight. Without this,
+   the fallback (which only has uid/email/emailDocId/fullName/role/createdAt)
+   can race the full-profile write and win, leaving birthDate, unit,
+   workplace and designation missing. */
+let registrationInProgress = false;
+
 /* ============================================================
    AUTH — LOGIN / REGISTER / FORGOT
    ============================================================ */
@@ -1623,7 +1650,17 @@ async function handleLogin() {
   btn.disabled = true;
 
   try {
-    const persistence = keep ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+    /* ⭐ If a stale session exists (from a prior LOCAL login), sign it out
+       first. setPersistence() is silently ignored when a user is already
+       signed in — this is what caused the "keep me logged in" bug. */
+    if (auth.currentUser) {
+      try { await auth.signOut(); } catch (e) { /* ignore */ }
+    }
+
+    const persistence = keep
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+
     await auth.setPersistence(persistence);
     await auth.signInWithEmailAndPassword(email, password);
   } catch (err) {
@@ -1661,18 +1698,24 @@ async function handleRegister() {
   btn.innerHTML = '<span class="spinner-inline"></span> Creating...';
   btn.disabled = true;
 
+  /* ⭐ Set the flag BEFORE creating the auth user, so any onAuthStateChanged
+     fired by Firebase during account creation will skip the fallback path. */
+  registrationInProgress = true;
+
   try {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const user = cred.user;
     await user.updateProfile({ displayName: fullName });
 
-    /* ⭐ CRITICAL: Force-refresh the ID token so Firestore's request.auth
+    /* Force-refresh the ID token so Firestore's request.auth
        is guaranteed to be populated before we attempt the write. */
     await user.getIdToken(true);
 
     const docId = emailDocId(email);
 
+    /* ⭐ Write the FULL profile — including birthDate, unit, workplace,
+       designation — with merge:false semantics via set(). */
     await db.collection('users').doc(docId).set({
       uid: email,
       email: email,
@@ -1706,6 +1749,9 @@ async function handleRegister() {
     else if (err.code === 'permission-denied')    msg = 'Firestore permission denied. Check your security rules.';
     showMessage('registerMessage', msg, 'error');
   } finally {
+    /* Keep the flag true briefly so any late-arriving onAuthStateChanged
+       callback still skips the fallback. Then reset. */
+    setTimeout(() => { registrationInProgress = false; }, 1500);
     btn.innerHTML = orig;
     btn.disabled = false;
   }
@@ -1752,6 +1798,14 @@ auth.onAuthStateChanged(async (user) => {
 
     const displayName = (currentUser && currentUser.fullName) || user.displayName || user.email || 'User';
     document.getElementById('userDisplay').textContent = displayName;
+	
+	/* Hide the "My Cumulative Score vs Team" card for specific users */
+	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
+	const scoreCard = document.getElementById('scoreCompareCard');
+	if (scoreCard) {
+	  const emailLC = (user.email || '').toLowerCase();
+	  scoreCard.style.display = HIDE_SCORE_EMAILS.includes(emailLC) ? 'none' : '';
+	}
     document.getElementById('userBadgeEmail').textContent = user.email || '';
 
     const isAdmin = currentUser && currentUser.role === 'admin';
@@ -1767,6 +1821,11 @@ auth.onAuthStateChanged(async (user) => {
       document.getElementById('adminView').style.display = 'none';
       renderAccordion();
       attachListeners();
+	  /* Skip cumulative-score listeners for hidden-score users */
+		const emailLC = (user.email || '').toLowerCase();
+		if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
+		  attachCumulativeListeners();
+		}
     }
   } else {
     currentDocId = null;
@@ -1788,6 +1847,18 @@ async function loadUserDoc() {
     if (doc.exists) {
       currentUser = doc.data();
     } else {
+      /* ⭐ If a registration is currently in flight, DON'T write a fallback.
+         handleRegister() will write the full profile itself. */
+      if (registrationInProgress) {
+        currentUser = {
+          uid: auth.currentUser.email,
+          email: auth.currentUser.email,
+          emailDocId: currentDocId,
+          fullName: auth.currentUser.displayName || '',
+          role: 'employee'
+        };
+        return;
+      }
       const fallback = {
         uid: auth.currentUser.email,
         email: auth.currentUser.email,
@@ -2249,7 +2320,11 @@ function attachListeners() {
       renderRecent();
     }, err => console.error('recent snapshot:', err));
 
-  attachCumulativeListeners();
+	const emailLC = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
+	const HIDE_SCORE_EMAILS = ['mdp1667@gmail.com'];
+	if (!HIDE_SCORE_EMAILS.includes(emailLC)) {
+	  attachCumulativeListeners();
+	}
 }
 
 function detachListeners() {
@@ -3748,6 +3823,7 @@ function openEditProfile(docId) {
 
   document.getElementById('editProfileEmail').value       = user.email || '';
   document.getElementById('editProfileFullName').value    = user.fullName || '';
+  document.getElementById('editProfileBirthDate').value   = user.birthDate || '';
   document.getElementById('editProfileUnit').value        = user.unit || '';
   document.getElementById('editProfileWorkplace').value   = user.workplace || '';
   document.getElementById('editProfileDesignation').value = user.designation || '';
@@ -3772,13 +3848,14 @@ async function saveEditProfile() {
   }
 
   const fullName    = document.getElementById('editProfileFullName').value.trim();
+  const birthDate   = document.getElementById('editProfileBirthDate').value;
   const unit        = document.getElementById('editProfileUnit').value.trim();
   const workplace   = document.getElementById('editProfileWorkplace').value.trim();
   const designation = document.getElementById('editProfileDesignation').value.trim();
 
   const msg = document.getElementById('editProfileMsg');
 
-  if (!fullName || !unit || !workplace || !designation) {
+  if (!fullName || !birthDate || !unit || !workplace || !designation) {
     msg.textContent = 'Please fill all required fields.';
     msg.className = 'message error';
     return;
@@ -3792,6 +3869,7 @@ async function saveEditProfile() {
   try {
     await db.collection('users').doc(editingProfileDocId).set({
       fullName,
+      birthDate,
       unit,
       workplace,
       designation,
@@ -3802,6 +3880,7 @@ async function saveEditProfile() {
     const u = allUsersCache.find(x => (x.emailDocId || x.docId) === editingProfileDocId);
     if (u) {
       u.fullName    = fullName;
+      u.birthDate   = birthDate;
       u.unit        = unit;
       u.workplace   = workplace;
       u.designation = designation;
@@ -3858,7 +3937,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — Delete User (full wipe) added.');
+console.log('✅ ICD Work Log — full profile write on register + edit-profile birth date fix.');
 </script>
 </body>
 </html>
