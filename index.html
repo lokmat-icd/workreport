@@ -1275,6 +1275,22 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* ---- One-time cleanup: force sign-out of any stale LOCAL session
+        saved before the "Keep me logged in" checkbox fix. ---- */
+(function forceSignOutOnce() {
+  const KEY = 'icd_force_signout_v1';
+  try {
+    if (!localStorage.getItem(KEY)) {
+      localStorage.setItem(KEY, '1');
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try { await auth.signOut(); } catch (e) {}
+        }
+      });
+    }
+  } catch (e) { /* localStorage unavailable — skip */ }
+})();
+
 /* ============================================================
    CONSTANTS
    ============================================================ */
@@ -1623,7 +1639,17 @@ async function handleLogin() {
   btn.disabled = true;
 
   try {
-    const persistence = keep ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+    /* ⭐ If a stale session exists (from a prior LOCAL login), sign it out
+       first. setPersistence() is silently ignored when a user is already
+       signed in — this is what caused the "keep me logged in" bug. */
+    if (auth.currentUser) {
+      try { await auth.signOut(); } catch (e) { /* ignore */ }
+    }
+
+    const persistence = keep
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+
     await auth.setPersistence(persistence);
     await auth.signInWithEmailAndPassword(email, password);
   } catch (err) {
