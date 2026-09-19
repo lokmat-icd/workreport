@@ -390,8 +390,12 @@ body {
 .wp-pie-empty i { font-size: 30px; color: #ddd; }
 
 /* ============ TEAM LOG STATS CHIPS ============ */
+.stat-chip.edition-chip {
+  border-left-color: #43a047;   /* green to distinguish from score chips */
+}
+
 .stats-chips {
-  display: flex; flex-wrap: wrap; gap: 8px;
+  display: flex; flex-wrap: wrap; gap: 3px;
   margin-bottom: 16px;
 }
 .stat-chip {
@@ -1575,6 +1579,14 @@ function workplaceGroupKeyLC(wp) {
   return workplaceGroupKey(wp).toLowerCase();
 }
 
+/* Returns the edition prefix from a workplace string, e.g.
+   "Kolhapur-City" -> "Kolhapur"
+   "Kolhapur Ichalkaranji" -> "Kolhapur" (only if a dash/space separator exists)
+   Falls back to the trimmed workplace itself. */
+function editionFromWorkplace(wp) {
+  return workplaceGroupKey(wp);
+}
+
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
@@ -1616,11 +1628,13 @@ function fmtTime(ts) {
 function dateRangeFromInputs(fromStr, toStr) {
   const range = { start: null, end: null };
   if (fromStr) {
-    const d = new Date(fromStr + 'T00:00:00');
+    const d = new Date(fromStr + 'T12:00:00');   // 12:00 PM noon
     range.start = firebase.firestore.Timestamp.fromDate(d);
   }
   if (toStr) {
-    const d = new Date(toStr + 'T23:59:59.999');
+    const d = new Date(toStr + 'T00:00:00');
+    d.setDate(d.getDate() + 1);                  // next calendar day
+    d.setHours(3, 0, 0, 0);                      // 03:00 AM
     range.end = firebase.firestore.Timestamp.fromDate(d);
   }
   return range;
@@ -3509,6 +3523,7 @@ function renderTeamLogStats(rows) {
   const container = document.getElementById('teamLogStats');
   if (!container) return;
 
+  /* ---------- Existing score chips (unchanged) ---------- */
   const sums = {};
   STATS_CHIPS.forEach(c => { sums[c.key] = 0; });
   rows.forEach(e => { if (sums[e.type] !== undefined) sums[e.type] += (e.score || 0); });
@@ -3520,6 +3535,36 @@ function renderTeamLogStats(rows) {
       <div class="stat-chip">
         <span class="chip-label">${escapeHtml(c.label)} :</span>
         <span class="chip-value">${val}</span>
+      </div>`;
+  });
+
+  /* ---------- Advt count chips ---------- */
+  /* When workplace filter = "All Workplaces" → group by edition prefix
+     (e.g. Kolhapur-City + Kolhapur-MIDC → "Kolhapur Ads").
+     When a specific workplace is selected → show that exact workplace name. */
+  const wpFilter = document.getElementById('logFilterWorkplace').value;
+  const groupByEdition = !wpFilter;
+
+  const advtCounts = {};
+  rows.forEach(e => {
+    if (e.type !== 'advt') return;
+    const label = groupByEdition
+      ? editionFromWorkplace(e.workplace)   // e.g. "Kolhapur"
+      : (e.workplace || '').trim();         // e.g. "Kolhapur-City"
+    if (!label) return;
+    const key = label.toLowerCase();
+    if (!advtCounts[key]) advtCounts[key] = { label, count: 0 };
+    advtCounts[key].count += 1;
+  });
+
+  const advtChips = Object.values(advtCounts)
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  advtChips.forEach(item => {
+    html += `
+      <div class="stat-chip edition-chip">
+        <span class="chip-label">${escapeHtml(item.label)} Ad:</span>
+        <span class="chip-value">${item.count}</span>
       </div>`;
   });
 
