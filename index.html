@@ -1567,6 +1567,15 @@ function safeId(s) {
   return String(s).replace(/[^a-zA-Z0-9]/g, '_');
 }
 
+/* ------------------------------------------------------------
+   WORKPLACE GROUPING
+   ------------------------------------------------------------
+   groupKey("Kolhapur-City")       -> "Kolhapur"
+   groupKey("Kolhapur-MIDC")       -> "Kolhapur"
+   groupKey("Kolhapur")            -> "Kolhapur"
+   groupKey("Satara-City")         -> "Satara"
+   groupKey("")                    -> ""
+   ------------------------------------------------------------ */
 function workplaceGroupKey(wp) {
   if (!wp) return '';
   const str = String(wp).trim();
@@ -1581,10 +1590,16 @@ function workplaceGroupKeyLC(wp) {
 
 /* Returns the edition prefix from a workplace string, e.g.
    "Kolhapur-City" -> "Kolhapur"
-   "Kolhapur Ichalkaranji" -> "Kolhapur" (only if a dash/space separator exists)
    Falls back to the trimmed workplace itself. */
 function editionFromWorkplace(wp) {
   return workplaceGroupKey(wp);
+}
+
+/* True if a raw workplace string belongs to the given grouped selection. */
+function workplaceMatchesGroup(rawWorkplace, groupedSelection) {
+  if (!groupedSelection) return true;
+  return workplaceGroupKey(rawWorkplace)
+    .toLowerCase() === groupedSelection.toLowerCase();
 }
 
 function showToast(message, type = 'info') {
@@ -1663,12 +1678,6 @@ function toLocalInputValue(ts) {
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   const pad = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function localNow() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
 }
 
 /* ============================================================
@@ -1937,10 +1946,6 @@ async function handleLogout() {
 /* ============================================================
    ROLE RESOLUTION
    ============================================================ */
-/**
- * Resolves the effective role for the current user.
- * Priority:  admin  >  HOD (email in hodAssignments)  >  employee
- */
 function resolveRole(user, hodMap) {
   if (!user) return { role: 'employee', scope: null };
   if ((user.role || '').toLowerCase() === 'admin') {
@@ -1961,7 +1966,6 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentDocId = emailDocId(user.email);
 
-    /* Load user profile and HOD assignments before routing */
     await Promise.all([
       loadUserDoc(),
       loadHodAssignmentsOnce()
@@ -1977,12 +1981,10 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
 
-    /* Header */
     const displayName = (currentUser && currentUser.fullName) || user.displayName || user.email || 'User';
     document.getElementById('userDisplay').textContent = displayName;
     document.getElementById('userBadgeEmail').textContent = user.email || '';
 
-    /* Role badge */
     const roleBadge = document.getElementById('headerRoleBadge');
     roleBadge.className = 'role-badge ' + currentRole;
     if (currentRole === 'admin') {
@@ -1995,10 +1997,8 @@ auth.onAuthStateChanged(async (user) => {
     }
     if (currentRole !== 'employee') roleBadge.style.display = 'inline-flex';
 
-    /* Gear (admin only) */
     document.getElementById('settingsBtn').style.display = (currentRole === 'admin') ? 'inline-flex' : 'none';
 
-    /* Route to view */
     if (currentRole === 'employee') {
       document.getElementById('employeeView').style.display = 'block';
       document.getElementById('managementView').style.display = 'none';
@@ -2014,7 +2014,6 @@ auth.onAuthStateChanged(async (user) => {
         attachCumulativeListeners();
       }
     } else {
-      /* HOD or Admin — management view */
       document.getElementById('employeeView').style.display = 'none';
       document.getElementById('managementView').style.display = 'block';
 
@@ -2117,13 +2116,11 @@ function attachHodListener() {
       }
       console.info('✅ HOD assignments synced.', hodAssignments);
 
-      /* Re-resolve role in case admin changed it live */
       if (currentUser) {
         const resolved = resolveRole(currentUser, hodAssignments);
         if (resolved.role !== currentRole) {
           currentRole = resolved.role;
           hodScope    = resolved.scope;
-          /* Reload view */
           if (auth.currentUser) {
             auth.currentUser.reload().catch(() => {});
           }
@@ -2132,7 +2129,6 @@ function attachHodListener() {
         }
       }
 
-      /* If settings modal HOD tab is open, refresh it */
       const sp = document.getElementById('setPaneHod');
       if (sp && sp.classList.contains('active')) renderHodAssignmentsList();
     },
@@ -2147,7 +2143,7 @@ function detachHodListener() {
 }
 
 /* ============================================================
-   SCORE RULES LISTENER (unchanged)
+   SCORE RULES LISTENER
    ============================================================ */
 function attachSettingsListener() {
   detachSettingsListener();
@@ -2903,7 +2899,6 @@ function isAdmin()  { return currentRole === 'admin'; }
 function isHod()    { return currentRole === 'hod'; }
 function isManagement() { return isAdmin() || isHod(); }
 
-/** True if a user is within the current HOD's scope */
 function userInHodScope(user) {
   if (!isHod() || !hodScope) return false;
   if (!user) return false;
@@ -2911,7 +2906,6 @@ function userInHodScope(user) {
   return hodScope.units.includes(user.unit);
 }
 
-/** True if an entry is within the current HOD's scope */
 function entryInHodScope(entry) {
   if (!isHod() || !hodScope) return false;
   if (!entry) return false;
@@ -2977,21 +2971,27 @@ function uniqueSorted(arr) {
   return Array.from(new Set(arr.filter(Boolean))).sort();
 }
 
-/* Get the universe of users the current management user can see */
+/* Grouped workplace options from a pool of users */
+function groupedWorkplaceOptions(pool) {
+  const grouped = new Set();
+  pool.forEach(u => {
+    const key = workplaceGroupKey(u.workplace);
+    if (key) grouped.add(key);
+  });
+  return Array.from(grouped).sort();
+}
+
 function visibleUsersForRole() {
   if (isAdmin()) {
     return allUsersCache.filter(u => u.role !== 'admin');
   }
-  /* HOD */
   return allUsersCache.filter(u => userInHodScope(u));
 }
 
-/* Get the list of units to show in dropdown */
 function unitOptionsForRole() {
   if (isAdmin()) {
     return uniqueSorted(allUsersCache.filter(u => u.role !== 'admin').map(u => u.unit));
   }
-  /* HOD: only assigned units */
   return hodScope ? hodScope.units.slice() : [];
 }
 
@@ -3010,7 +3010,7 @@ function populateDashUnitSelect() {
 function populateDashWorkplaceSelect() {
   const unit = document.getElementById('dashFilterUnit').value;
   const pool = visibleUsersForRole().filter(u => !unit || u.unit === unit);
-  const wps  = uniqueSorted(pool.map(u => u.workplace));
+  const wps  = groupedWorkplaceOptions(pool);
   const sel  = document.getElementById('dashFilterWorkplace');
   const prev = sel.value;
   sel.innerHTML = `<option value="">All Workplaces</option>` +
@@ -3030,7 +3030,7 @@ function populateLogUnitSelect() {
 function populateLogWorkplaceSelect() {
   const unit = document.getElementById('logFilterUnit').value;
   const pool = visibleUsersForRole().filter(u => !unit || u.unit === unit);
-  const wps  = uniqueSorted(pool.map(u => u.workplace));
+  const wps  = groupedWorkplaceOptions(pool);
   const sel  = document.getElementById('logFilterWorkplace');
   const prev = sel.value;
   sel.innerHTML = `<option value="">All Workplaces</option>` +
@@ -3043,7 +3043,7 @@ function populateLogEmployeeSelect() {
   const wp   = document.getElementById('logFilterWorkplace').value;
   let pool = visibleUsersForRole();
   if (unit) pool = pool.filter(u => u.unit === unit);
-  if (wp)   pool = pool.filter(u => u.workplace === wp);
+  if (wp)   pool = pool.filter(u => workplaceMatchesGroup(u.workplace, wp));
   pool = pool.slice().sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
 
   const sel = document.getElementById('logFilterEmployee');
@@ -3112,7 +3112,7 @@ function filterUsersByDashFilters() {
 
   return visibleUsersForRole().filter(u => {
     if (unit && u.unit !== unit) return false;
-    if (wp && u.workplace !== wp) return false;
+    if (wp && !workplaceMatchesGroup(u.workplace, wp)) return false;
     return true;
   });
 }
@@ -3320,8 +3320,6 @@ function renderEmployeeCards() {
     const cardId = 'card-' + docId.replace(/[^a-zA-Z0-9]/g, '_');
     const initials = (user.fullName || user.email || '?').trim().charAt(0).toUpperCase();
 
-    /* Only admin can delete; HOD can edit profile. */
-    const canEditProfile = true;  // both HOD and Admin
     const card = document.createElement('div');
     card.className = 'emp-card';
     card.innerHTML = `
@@ -3342,9 +3340,9 @@ function renderEmployeeCards() {
       </div>
       <div class="chart-wrap"><canvas id="${cardId}"></canvas></div>
       <div class="emp-card-actions" style="gap:8px;">
-        ${canEditProfile ? `<button class="btn btn-outline btn-sm" onclick="openEditProfile('${docId}')">
+        <button class="btn btn-outline btn-sm" onclick="openEditProfile('${docId}')">
           <i class="fas fa-user-edit"></i> Edit Profile
-        </button>` : ''}
+        </button>
         <button class="btn btn-outline btn-sm" onclick="openDetailLog('${docId}')">
           <i class="fas fa-clipboard-list"></i> Detail Log
         </button>
@@ -3395,7 +3393,6 @@ function openDetailLog(docId) {
   const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
   if (!user) { showToast('Employee not found', 'error'); return; }
 
-  /* HOD scope check */
   if (isHod() && !userInHodScope(user)) {
     showToast('This employee is outside your scope.', 'warning'); return;
   }
@@ -3489,7 +3486,7 @@ function renderTeamLog() {
   const toStr   = document.getElementById('logFilterTo').value;
 
   const unitMatch = (u) => !unit || u.unit === unit;
-  const wpMatch   = (u) => !wp   || u.workplace === wp;
+  const wpMatch   = (u) => !wp   || workplaceMatchesGroup(u.workplace, wp);
   const empMatch  = (u) => !emp  || (u.emailDocId || u.docId) === emp;
 
   const allowedDocIds = new Set(
@@ -3523,7 +3520,6 @@ function renderTeamLogStats(rows) {
   const container = document.getElementById('teamLogStats');
   if (!container) return;
 
-  /* ---------- Existing score chips (unchanged) ---------- */
   const sums = {};
   STATS_CHIPS.forEach(c => { sums[c.key] = 0; });
   rows.forEach(e => { if (sums[e.type] !== undefined) sums[e.type] += (e.score || 0); });
@@ -3538,10 +3534,10 @@ function renderTeamLogStats(rows) {
       </div>`;
   });
 
-  /* ---------- Advt count chips ---------- */
-  /* When workplace filter = "All Workplaces" → group by edition prefix
-     (e.g. Kolhapur-City + Kolhapur-MIDC → "Kolhapur Ads").
-     When a specific workplace is selected → show that exact workplace name. */
+  /* ---------- Advt count chips ----------
+     When "All Workplaces" is selected → group by edition prefix.
+     When a specific workplace group is selected → show the raw
+     workplace name so City/MIDC can be distinguished. */
   const wpFilter = document.getElementById('logFilterWorkplace').value;
   const groupByEdition = !wpFilter;
 
@@ -3549,8 +3545,8 @@ function renderTeamLogStats(rows) {
   rows.forEach(e => {
     if (e.type !== 'advt') return;
     const label = groupByEdition
-      ? editionFromWorkplace(e.workplace)   // e.g. "Kolhapur"
-      : (e.workplace || '').trim();         // e.g. "Kolhapur-City"
+      ? editionFromWorkplace(e.workplace)
+      : (e.workplace || '').trim();
     if (!label) return;
     const key = label.toLowerCase();
     if (!advtCounts[key]) advtCounts[key] = { label, count: 0 };
@@ -3602,7 +3598,6 @@ function renderTeamLogRows() {
     const detail = summarizePayload(e.type, e.payload);
     const scoreVal = (e.score === null || e.score === undefined) ? 0 : e.score;
 
-    /* Both HOD and Admin can edit/delete in management view */
     const actionsHtml = `<div style="display:flex;gap:4px;justify-content:center;">
          <button class="row-btn edit" onclick="openAdminEditEntry('${e.id}')" title="Edit">
            <i class="fas fa-edit"></i>
@@ -3648,7 +3643,6 @@ function openAdminEditEntry(entryId) {
   const entry = adminEntriesCache.find(e => e.id === entryId);
   if (!entry) { showToast('Entry not found', 'error'); return; }
 
-  /* HOD scope check */
   if (isHod() && !entryInHodScope(entry)) {
     showToast('This entry is outside your scope.', 'warning'); return;
   }
@@ -3693,7 +3687,6 @@ async function saveAdminEditedEntry() {
 
   const entry = editingEntry;
 
-  /* HOD scope check */
   if (isHod() && !entryInHodScope(entry)) {
     showToast('This entry is outside your scope.', 'warning'); return;
   }
@@ -3972,7 +3965,6 @@ function switchSettingsTab(tab) {
 function openSettings() {
   if (!isAdmin()) { showToast('Admin access required', 'warning'); return; }
 
-  /* Reset to score tab */
   switchSettingsTab('scoreRules');
   renderSettingsForm();
   renderHodAssignmentsList();
@@ -4159,7 +4151,6 @@ function addHodUnitRow(value) {
       <i class="fas fa-times"></i>
     </button>`;
   row.querySelector('.remove-unit-btn').addEventListener('click', () => {
-    /* Keep at least 1 row */
     if (rows.children.length <= 1) {
       row.querySelector('input').value = '';
     } else {
@@ -4176,7 +4167,6 @@ function collectHodUnitValues() {
     const v = inp.value.trim();
     if (v) out.push(v);
   });
-  /* Deduplicate (case-insensitive) but preserve first-seen display case */
   const seen = new Set();
   const result = [];
   out.forEach(u => {
@@ -4206,14 +4196,12 @@ function saveHodRow() {
     return;
   }
 
-  /* Duplicate check for new entries */
   if (!hodEditOriginalEmail && hodAssignments[emailRaw]) {
     msg.textContent = 'This email already has HOD assignment. Edit it instead.';
     msg.className = 'message error';
     return;
   }
 
-  /* Update local map */
   if (hodEditOriginalEmail && hodEditOriginalEmail !== emailRaw) {
     delete hodAssignments[hodEditOriginalEmail];
   }
@@ -4248,7 +4236,6 @@ async function saveHodAssignments() {
   btn.disabled  = true;
 
   try {
-    /* Deep-normalize before write */
     const cleaned = {};
     Object.keys(hodAssignments).forEach(k => {
       const key = String(k).toLowerCase().trim();
@@ -4287,7 +4274,6 @@ function openEditProfile(docId) {
   const user = allUsersCache.find(u => (u.emailDocId || u.docId) === docId);
   if (!user) { showToast('Employee not found', 'error'); return; }
 
-  /* HOD scope check */
   if (isHod() && !userInHodScope(user)) {
     showToast('This employee is outside your scope.', 'warning'); return;
   }
@@ -4306,7 +4292,6 @@ function openEditProfile(docId) {
   msg.style.display = 'none';
   msg.className = 'message';
 
-  /* Danger zone: admin only, and not for self */
   const dz = document.getElementById('deleteUserZone');
   const isSelf = (docId === currentDocId);
   dz.style.display = (isAdmin() && !isSelf) ? 'block' : 'none';
@@ -4332,7 +4317,6 @@ async function saveEditProfile() {
     return;
   }
 
-  /* HOD scope: new unit must be within scope */
   if (isHod()) {
     if (!hodScope || !hodScope.units.includes(unit)) {
       msg.textContent = 'You cannot assign a unit outside your scope.';
@@ -4362,7 +4346,6 @@ async function saveEditProfile() {
       u.designation = designation;
     }
 
-    /* Propagate to entries */
     try {
       const entriesSnap = await db.collection('entries')
         .where('emailDocId', '==', editingProfileDocId)
@@ -4377,6 +4360,13 @@ async function saveEditProfile() {
     } catch (propagateErr) {
       console.warn('Could not propagate to entries:', propagateErr);
     }
+
+    /* Refresh dropdowns in case unit/workplace changed */
+    populateDashUnitSelect();
+    populateDashWorkplaceSelect();
+    populateLogUnitSelect();
+    populateLogWorkplaceSelect();
+    populateLogEmployeeSelect();
 
     renderDashboard();
     renderTeamLog();
@@ -4415,7 +4405,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('✅ ICD Work Log — HOD support enabled (email→units via settings/hodAssignments).');
+console.log('✅ ICD Work Log — workplace prefix grouping active in filters.');
 </script>
 </body>
 </html>
